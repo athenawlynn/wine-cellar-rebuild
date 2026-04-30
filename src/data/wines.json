@@ -17,7 +17,7 @@
     "backPhoto": "IMG_7953.jpg",
     "cellar": 1,
     "zone": "bottom",
-    "slot": 1,
+    "slot": 15,
     "status": "Ready",
     "tastingNotes": null,
     "drinkWindow": null
@@ -40,7 +40,7 @@
     "backPhoto": "IMG_7955.jpg",
     "cellar": 1,
     "zone": "bottom",
-    "slot": 2,
+    "slot": 5,
     "status": "Ready",
     "tastingNotes": null,
     "drinkWindow": null
@@ -63,7 +63,7 @@
     "backPhoto": "IMG_7957.jpg",
     "cellar": 1,
     "zone": "bottom",
-    "slot": 3,
+    "slot": 10,
     "status": "Ready",
     "tastingNotes": null,
     "drinkWindow": null
@@ -86,7 +86,7 @@
     "backPhoto": "IMG_7959.jpg",
     "cellar": 1,
     "zone": "bottom",
-    "slot": 4,
+    "slot": 9,
     "status": "Ready",
     "tastingNotes": null,
     "drinkWindow": null
@@ -109,7 +109,7 @@
     "backPhoto": "IMG_7961.jpg",
     "cellar": 1,
     "zone": "bottom",
-    "slot": 5,
+    "slot": 8,
     "status": "Ready",
     "tastingNotes": null,
     "drinkWindow": null
@@ -132,7 +132,7 @@
     "backPhoto": "IMG_7963.jpg",
     "cellar": 1,
     "zone": "top",
-    "slot": 1,
+    "slot": 6,
     "status": "Ready",
     "tastingNotes": null,
     "drinkWindow": null
@@ -178,7 +178,7 @@
     "backPhoto": "IMG_7967.jpg",
     "cellar": 1,
     "zone": "bottom",
-    "slot": 7,
+    "slot": 13,
     "status": "Ready",
     "tastingNotes": null,
     "drinkWindow": null
@@ -201,7 +201,7 @@
     "backPhoto": "IMG_7969.jpg",
     "cellar": 2,
     "zone": "bottom",
-    "slot": 1,
+    "slot": 4,
     "status": "Ready",
     "tastingNotes": null,
     "drinkWindow": null
@@ -224,7 +224,7 @@
     "backPhoto": "IMG_7971.jpg",
     "cellar": 1,
     "zone": "top",
-    "slot": 2,
+    "slot": 1,
     "status": "Ready",
     "tastingNotes": null,
     "drinkWindow": null
@@ -247,7 +247,7 @@
     "backPhoto": "IMG_7973.jpg",
     "cellar": 1,
     "zone": "bottom",
-    "slot": 8,
+    "slot": 4,
     "status": "Hold",
     "tastingNotes": null,
     "drinkWindow": null
@@ -270,7 +270,7 @@
     "backPhoto": "IMG_7975.jpg",
     "cellar": 2,
     "zone": "bottom",
-    "slot": 2,
+    "slot": 3,
     "status": "Ready",
     "tastingNotes": null,
     "drinkWindow": null
@@ -293,7 +293,7 @@
     "backPhoto": "IMG_7977.jpg",
     "cellar": 1,
     "zone": "top",
-    "slot": 3,
+    "slot": 2,
     "status": "Ready",
     "tastingNotes": null,
     "drinkWindow": null
@@ -316,7 +316,7 @@
     "backPhoto": "IMG_7979.jpg",
     "cellar": 2,
     "zone": "bottom",
-    "slot": 3,
+    "slot": 1,
     "status": "Ready",
     "tastingNotes": null,
     "drinkWindow": null
@@ -339,7 +339,7 @@
     "backPhoto": "IMG_7980.jpg",
     "cellar": 2,
     "zone": "bottom",
-    "slot": 4,
+    "slot": 2,
     "status": "Ready",
     "tastingNotes": null,
     "drinkWindow": null
@@ -362,7 +362,7 @@
     "backPhoto": "IMG_7983.jpg",
     "cellar": 1,
     "zone": "bottom",
-    "slot": 9,
+    "slot": 12,
     "status": "Ready",
     "tastingNotes": null,
     "drinkWindow": null
@@ -385,7 +385,7 @@
     "backPhoto": "IMG_8087.jpg",
     "cellar": 2,
     "zone": "top",
-    "slot": 1,
+    "slot": 2,
     "status": "Ready",
     "tastingNotes": null,
     "drinkWindow": null
@@ -408,7 +408,7 @@
     "backPhoto": "IMG_8089.jpg",
     "cellar": 2,
     "zone": "bottom",
-    "slot": 5,
+    "slot": 7,
     "status": "Ready",
     "tastingNotes": null,
     "drinkWindow": null
@@ -431,7 +431,7 @@
     "backPhoto": "IMG_8091.jpg",
     "cellar": 1,
     "zone": "bottom",
-    "slot": 10,
+    "slot": 14,
     "status": "Ready",
     "tastingNotes": null,
     "drinkWindow": null
@@ -454,7 +454,7 @@
     "backPhoto": "IMG_8094.jpg",
     "cellar": 1,
     "zone": "top",
-    "slot": 4,
+    "slot": 7,
     "status": "Ready",
     "tastingNotes": null,
     "drinkWindow": null
@@ -500,7 +500,7 @@
     "backPhoto": "IMG_8098.jpg",
     "cellar": 1,
     "zone": "bottom",
-    "slot": 11,
+    "slot": 16,
     "status": "Ready",
     "tastingNotes": null,
     "drinkWindow": null
@@ -523,7 +523,7 @@
     "backPhoto": "IMG_8100.jpg",
     "cellar": 1,
     "zone": "bottom",
-    "slot": 12,
+    "slot": 11,
     "status": "Ready",
     "tastingNotes": null,
     "drinkWindow": null
@@ -546,7 +546,7 @@
     "backPhoto": "IMG_8102.jpg",
     "cellar": 1,
     "zone": "top",
-    "slot": 6,
+    "slot": 4,
     "status": "Ready",
     "tastingNotes": null,
     "drinkWindow": null
@@ -569,7 +569,7 @@
     "backPhoto": null,
     "cellar": 2,
     "zone": "top",
-    "slot": 2,
+    "slot": 1,
     "status": "Ready",
     "tastingNotes": null,
     "drinkWindow": null
@@ -592,7 +592,7 @@
     "backPhoto": "IMG_8105.jpg",
     "cellar": 1,
     "zone": "top",
-    "slot": 7,
+    "slot": 3,
     "status": "Hold",
     "tastingNotes": null,
     "drinkWindow": null
@@ -615,7 +615,7 @@
     "backPhoto": "IMG_8107.jpg",
     "cellar": 2,
     "zone": "bottom",
-    "slot": 6,
+    "slot": 11,
     "status": "Ready",
     "tastingNotes": null,
     "drinkWindow": null
@@ -638,7 +638,7 @@
     "backPhoto": "IMG_8110.jpg",
     "cellar": 2,
     "zone": "bottom",
-    "slot": 7,
+    "slot": 5,
     "status": "Ready",
     "tastingNotes": null,
     "drinkWindow": null
@@ -661,7 +661,7 @@
     "backPhoto": "IMG_8112.jpg",
     "cellar": 2,
     "zone": "bottom",
-    "slot": 8,
+    "slot": 12,
     "status": "Ready",
     "tastingNotes": null,
     "drinkWindow": null
@@ -684,7 +684,7 @@
     "backPhoto": "IMG_8114.jpg",
     "cellar": 2,
     "zone": "bottom",
-    "slot": 9,
+    "slot": 8,
     "status": "Ready",
     "tastingNotes": null,
     "drinkWindow": null
@@ -730,7 +730,7 @@
     "backPhoto": "IMG_8118.jpg",
     "cellar": 2,
     "zone": "bottom",
-    "slot": 11,
+    "slot": 9,
     "status": "Ready",
     "tastingNotes": null,
     "drinkWindow": null
@@ -753,7 +753,7 @@
     "backPhoto": "IMG_5398.jpg",
     "cellar": 1,
     "zone": "bottom",
-    "slot": 13,
+    "slot": 1,
     "status": "Ready",
     "tastingNotes": "Tuscan red with notes of cherry and plum, delicate spice, smooth well-rounded texture, and hints of aged cheese suggested on the label.",
     "drinkWindow": "2025-2028"
@@ -776,7 +776,7 @@
     "backPhoto": "IMG_5400.jpg",
     "cellar": 1,
     "zone": "bottom",
-    "slot": 14,
+    "slot": 2,
     "status": "Ready",
     "tastingNotes": "Bright Tuscan Sangiovese with red cherry, blackberry, spice, tomato, and savory herb notes from the back label description.",
     "drinkWindow": "2025-2029"
@@ -799,7 +799,7 @@
     "backPhoto": "IMG_5402.jpg",
     "cellar": 1,
     "zone": "bottom",
-    "slot": 15,
+    "slot": 3,
     "status": "Ready",
     "tastingNotes": "Bright Tuscan Sangiovese with red cherry, blackberry, spice, tomato, and savory herb notes from the back label description.",
     "drinkWindow": "2025-2029"
@@ -822,7 +822,7 @@
     "backPhoto": "IMG_5404.jpg",
     "cellar": 1,
     "zone": "bottom",
-    "slot": 16,
+    "slot": 7,
     "status": "Ready",
     "tastingNotes": "Classic Chianti Classico Riserva profile: cherry, red berry, spice, savory herbs, fresh acidity, and firm Sangiovese structure.",
     "drinkWindow": "2025-2032"
@@ -845,7 +845,7 @@
     "backPhoto": "IMG_5406.jpg",
     "cellar": 2,
     "zone": "bottom",
-    "slot": 12,
+    "slot": 6,
     "status": "Ready",
     "tastingNotes": "Plush and inviting Cabernet with generous dark berry fruit, violet, clove, cedar, sweet oak, mint, sage, red berries, black cherry, and blackberry.",
     "drinkWindow": "2026-2035"
