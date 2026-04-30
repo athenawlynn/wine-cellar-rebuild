@@ -82,7 +82,12 @@ function inferDrinkWindow(wine) {
 
 function loadWines() {
   const saved = localStorage.getItem("lynn-cellar-wines");
-  return saved ? JSON.parse(saved) : seedWines;
+  if (!saved) return seedWines;
+  const savedWines = JSON.parse(saved);
+  const savedById = new Map(savedWines.map((wine) => [wine.id, wine]));
+  const mergedSeed = seedWines.map((wine) => savedById.get(wine.id) || wine);
+  const customWines = savedWines.filter((wine) => !seedWines.some((seed) => seed.id === wine.id));
+  return [...mergedSeed, ...customWines].sort((a, b) => a.id - b.id);
 }
 
 function saveWines(wines) {
