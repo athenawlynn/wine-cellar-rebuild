@@ -46,6 +46,7 @@ const ZONE_CAPACITY = {
   top: COOLER_LAYOUT.top.reduce((sum, shelf) => sum + shelf.capacity, 0),
   bottom: COOLER_LAYOUT.bottom.reduce((sum, shelf) => sum + shelf.capacity, 0),
 };
+const TOP_ZONE_CATEGORIES = ["White", "Sparkling", "Dessert", "Rose", "Rosé", "Rosé"];
 
 const fallbackNotes = {
   Cabernet: "Dark fruit, cassis, cedar, and polished tannin with a structured finish.",
@@ -80,18 +81,58 @@ function inferDrinkWindow(wine) {
   return `${wine.vintage + 1}-${wine.vintage + 7}`;
 }
 
+function cellarForWine(wine) {
+  return Number(wine.estimatedPrice || 0) < 50 ? 1 : 2;
+}
+
+function zoneForWine(wine) {
+  return TOP_ZONE_CATEGORIES.includes(wine.category) ? "top" : "bottom";
+}
+
+function placementSort(a, b) {
+  return (
+    Number(a.estimatedPrice || 0) - Number(b.estimatedPrice || 0) ||
+    String(a.producer || "").localeCompare(String(b.producer || "")) ||
+    String(a.wineName || "").localeCompare(String(b.wineName || "")) ||
+    Number(a.vintage || 0) - Number(b.vintage || 0) ||
+    Number(a.id || 0) - Number(b.id || 0)
+  );
+}
+
+function applyCellarPlacement(wines) {
+  const grouped = new Map();
+
+  for (const wine of wines) {
+    const cellar = cellarForWine(wine);
+    const zone = zoneForWine(wine);
+    const key = `${cellar}-${zone}`;
+    grouped.set(key, [...(grouped.get(key) || []), { ...wine, cellar, zone }]);
+  }
+
+  return Array.from(grouped.values())
+    .flatMap((group) =>
+      group
+        .sort(placementSort)
+        .map((wine, index) => ({
+          ...wine,
+          slot: index + 1,
+        })),
+    )
+    .sort((a, b) => Number(a.id || 0) - Number(b.id || 0));
+}
+
 function loadWines() {
   const saved = localStorage.getItem("lynn-cellar-wines");
-  if (!saved) return seedWines;
+  if (!saved) return applyCellarPlacement(seedWines);
   const savedWines = JSON.parse(saved);
   const savedById = new Map(savedWines.map((wine) => [wine.id, wine]));
-  const mergedSeed = seedWines.map((wine) => savedById.get(wine.id) || wine);
+  const mergedSeed = seedWines.map((wine) => ({ ...(savedById.get(wine.id) || {}), ...wine }));
   const customWines = savedWines.filter((wine) => !seedWines.some((seed) => seed.id === wine.id));
-  return [...mergedSeed, ...customWines].sort((a, b) => a.id - b.id);
+  return applyCellarPlacement([...mergedSeed, ...customWines]);
 }
 
 function saveWines(wines) {
-  localStorage.setItem("lynn-cellar-wines", JSON.stringify(wines));
+  localStorage.setItem("lynn-cellar-wines", JSON.stringify(applyCellarPlacement(wines)));
 }
 
 function zoneLabel(zone) {
@@ -110,13 +151,21 @@ function getSlotMeta(zone, slot) {
 }
 
 function suggestPlacement(wines, draft) {
-  const cellar = Number(draft.estimatedPrice || 0) < 50 ? 1 : 2;
-  const chilled = ["White", "Sparkling", "Dessert", "Rose", "Rosé", "Rosé"];
-  const zone = chilled.includes(draft.category) ? "top" : "bottom";
-  const occupied = new Set(wines.filter((w) => w.cellar === cellar && w.zone === zone).map((w) => w.slot));
-  let slot = 1;
-  while (occupied.has(slot) && slot < ZONE_CAPACITY[zone]) slot += 1;
-  return { cellar, zone, slot };
+  const previewWine = {
+    id: Number.MAX_SAFE_INTEGER,
+    producer: draft.producer || "Unknown producer",
+    wineName: draft.wineName || "Unidentified bottle",
+    vintage: draft.vintage ? Number(draft.vintage) : null,
+    estimatedPrice: Number(draft.estimatedPrice || 0),
+    category: draft.category || "Red",
+  };
+  const placed = applyCellarPlacement([...wines, previewWine]);
+  const previewPlacement = placed.find((wine) => wine.id === Number.MAX_SAFE_INTEGER);
+  return {
+    cellar: previewPlacement.cellar,
+    zone: previewPlacement.zone,
+    slot: previewPlacement.slot,
+  };
 }
 
 function App() {
@@ -161,7 +210,7 @@ function App() {
       status: "Ready",
       ...placement,
     };
-    const next = [...wines, nextWine];
+    const next = applyCellarPlacement([...wines, nextWine]);
     setWines(next);
     saveWines(next);
     setActiveWineId(nextWine.id);
