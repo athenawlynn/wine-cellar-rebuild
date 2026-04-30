@@ -175,7 +175,8 @@ h2 {
 
 .dashboard-grid,
 .cellar-layout,
-.detail-layout {
+.detail-layout,
+.cellars-page {
   display: grid;
   gap: 18px;
 }
@@ -242,7 +243,8 @@ h2 {
 }
 
 .scan-stack span,
-.pill {
+.pill,
+.spec-badges span {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -310,6 +312,72 @@ h2 {
   gap: 18px;
 }
 
+.specs-panel {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(280px, 0.8fr) minmax(320px, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.specs-panel.compact {
+  grid-template-columns: minmax(260px, 0.7fr) minmax(320px, 1fr);
+}
+
+.spec-copy p:not(.eyebrow) {
+  color: #e3c8ca;
+}
+
+.spec-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.spec-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.spec-item {
+  min-height: 92px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 8px;
+  background: rgba(20, 7, 10, 0.34);
+  padding: 16px;
+}
+
+.spec-item span {
+  display: block;
+  color: #c9a9af;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+}
+
+.spec-item strong {
+  display: block;
+  margin-top: 8px;
+  color: #fff8ef;
+  font-size: 1rem;
+}
+
+.cooler-media {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+}
+
+.cooler-media img {
+  width: 100%;
+  height: clamp(220px, 36vw, 420px);
+  border-radius: 8px;
+  object-fit: cover;
+  background: #12080c;
+}
+
 .zone {
   border-top: 1px solid rgba(255, 255, 255, 0.09);
   padding-top: 16px;
@@ -321,6 +389,29 @@ h2 {
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 10px;
+}
+
+.shelf-stack {
+  display: grid;
+  gap: 10px;
+}
+
+.shelf-row {
+  display: grid;
+  grid-template-columns: 94px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+}
+
+.shelf-label strong {
+  display: block;
+  font-size: 0.82rem;
+}
+
+.shelf-label span {
+  display: block;
+  color: #c9a9af;
+  font-size: 0.72rem;
 }
 
 .slot-grid {
@@ -611,8 +702,14 @@ h2 {
 
   .dashboard-grid,
   .cellar-layout,
-  .detail-layout {
+  .detail-layout,
+  .specs-panel,
+  .specs-panel.compact {
     grid-template-columns: 1fr;
+  }
+
+  .spec-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .collection-row {
@@ -637,7 +734,13 @@ h2 {
 
   .metric-panel,
   .detail-stats,
-  .form-grid {
+  .form-grid,
+  .spec-grid,
+  .cooler-media {
+    grid-template-columns: 1fr;
+  }
+
+  .shelf-row {
     grid-template-columns: 1fr;
   }
 
