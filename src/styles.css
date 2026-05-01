@@ -1,7 +1,7 @@
 :root {
   color-scheme: dark;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: #11080b;
+  background: #201317;
   color: #fff8ef;
   font-synthesis: none;
   line-height: 1.45;
@@ -20,8 +20,8 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background:
-    radial-gradient(circle at 10% 0%, rgba(132, 29, 48, 0.36), transparent 28%),
-    linear-gradient(135deg, #13070a 0%, #281016 42%, #0e0808 100%);
+    linear-gradient(135deg, rgba(88, 21, 36, 0.22) 0 25%, transparent 25% 50%, rgba(233, 191, 127, 0.06) 50% 75%, transparent 75%) 0 0 / 72px 72px,
+    linear-gradient(135deg, #211318 0%, #352027 46%, #181214 100%);
 }
 
 button,
@@ -40,10 +40,10 @@ a {
 }
 
 .app-shell {
-  --bg: #12080c;
-  --panel: rgba(255, 255, 255, 0.065);
-  --panel-strong: rgba(18, 8, 12, 0.78);
-  --panel-soft: rgba(255, 248, 239, 0.035);
+  --bg: #211318;
+  --panel: rgba(255, 255, 255, 0.085);
+  --panel-strong: rgba(36, 21, 26, 0.88);
+  --panel-soft: rgba(255, 248, 239, 0.055);
   --text: #fff8ef;
   --muted: #cdb8b6;
   --faint: #9a8585;
@@ -56,7 +56,7 @@ a {
   grid-template-columns: 280px minmax(0, 1fr);
   min-height: 100vh;
   background:
-    linear-gradient(180deg, rgba(255, 248, 239, 0.035), transparent 360px),
+    linear-gradient(180deg, rgba(255, 248, 239, 0.06), transparent 360px),
     var(--bg);
   color: var(--text);
 }
@@ -129,6 +129,10 @@ a {
   font-weight: 800;
   text-decoration: none;
   padding: 0 18px;
+}
+
+button.primary-link {
+  cursor: pointer;
 }
 
 .scan-cta,
@@ -289,10 +293,28 @@ p {
   padding: clamp(18px, 3vw, 28px);
 }
 
+.work-panel {
+  position: relative;
+  overflow: hidden;
+}
+
+.work-panel::after {
+  content: "L";
+  position: absolute;
+  right: 18px;
+  bottom: -22px;
+  color: rgba(233, 191, 127, 0.07);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 8rem;
+  line-height: 1;
+  pointer-events: none;
+}
+
 .dashboard-page,
 .cellars-page,
 .collection-page,
 .specs-page,
+.tools-page,
 .detail-page,
 .archive-page {
   display: grid;
@@ -308,6 +330,11 @@ p {
     linear-gradient(90deg, rgba(18, 8, 12, 0.92), rgba(18, 8, 12, 0.42)),
     url("/cooler/lynn-coolers.jpg") center / cover;
   overflow: hidden;
+}
+
+.hero-luxury > * {
+  position: relative;
+  z-index: 1;
 }
 
 .theme-light .hero-luxury {
@@ -363,6 +390,12 @@ p {
   font-weight: 500;
 }
 
+.metric small {
+  display: block;
+  margin-top: 8px;
+  color: var(--muted);
+}
+
 .service-grid,
 .system-grid,
 .region-grid,
@@ -412,6 +445,31 @@ p {
 
 .system-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.system-grid button {
+  display: grid;
+  gap: 6px;
+  min-height: 92px;
+  border: 1px solid rgba(233, 191, 127, 0.24);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(233, 191, 127, 0.12), transparent 56%),
+    var(--panel-soft);
+  color: var(--text);
+  padding: 14px;
+  text-align: left;
+}
+
+.system-grid button:hover {
+  border-color: rgba(233, 191, 127, 0.52);
+  background:
+    linear-gradient(135deg, rgba(233, 191, 127, 0.18), transparent 56%),
+    var(--panel);
+}
+
+.system-grid button small {
+  color: var(--muted);
 }
 
 .quiet-copy {
@@ -464,24 +522,94 @@ p {
 .map-dot {
   width: 12px;
   height: 12px;
-  margin-bottom: 14px;
   border-radius: 999px;
   background: var(--gold);
   box-shadow: 0 0 0 8px var(--gold-soft);
 }
 
+.region-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.region-card-head {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.region-card-head span {
+  color: var(--faint);
+  font-size: 0.72rem;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.region-backdrop {
+  position: absolute;
+  right: 8px;
+  top: -20px;
+  color: rgba(233, 191, 127, 0.1);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 6.2rem;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.region-card h3,
+.region-card p,
+.region-card .bottle-list {
+  position: relative;
+  z-index: 1;
+}
+
 .rule-band {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 12px;
-  padding: 16px;
+  padding: 0;
+}
+
+.rule-band article {
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: var(--panel-soft);
+  background:
+    linear-gradient(180deg, rgba(233, 191, 127, 0.1), transparent),
+    var(--panel-soft);
+  padding: 14px;
+}
+
+.rule-band span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  min-height: 28px;
+  margin-bottom: 10px;
+  border: 1px solid rgba(233, 191, 127, 0.3);
+  border-radius: 999px;
+  color: var(--gold);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
 }
 
 .rule-band strong {
   display: block;
+}
+
+.rule-band p {
+  margin: 6px 0 0;
+  font-size: 0.88rem;
+}
+
+.cellar-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
 }
 
 .cellar-shell,
@@ -627,10 +755,110 @@ p {
 }
 
 .filter-grid,
-.form-grid {
+.form-grid,
+.quick-form,
+.region-filter-bar {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
+}
+
+.region-filter-bar {
+  align-items: end;
+  margin-bottom: 16px;
+}
+
+.tool-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 14px;
+}
+
+.tool-tabs button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-soft);
+  color: var(--muted);
+  padding: 0 12px;
+}
+
+.tool-tabs button.active,
+.tool-tabs button:hover {
+  border-color: rgba(233, 191, 127, 0.45);
+  background: var(--gold-soft);
+  color: var(--text);
+}
+
+.tool-panel {
+  display: grid;
+  gap: 16px;
+}
+
+.tool-list,
+.producer-grid,
+.value-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.producer-grid,
+.value-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.tool-card {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-soft);
+  padding: 14px;
+}
+
+.tool-card.horizontal {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+}
+
+.tool-card strong {
+  color: var(--text);
+}
+
+.tool-card span {
+  color: var(--faint);
+  font-size: 0.86rem;
+}
+
+.tool-card p {
+  margin-bottom: 0;
+}
+
+.status-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 38px;
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+}
+
+.status-toggle.done {
+  border-color: rgba(233, 191, 127, 0.45);
+  background: var(--gold-soft);
+  color: var(--gold);
+}
+
+.quick-form .save-button {
+  grid-column: 1 / -1;
 }
 
 label {
@@ -910,7 +1138,10 @@ video {
 @media (max-width: 1120px) {
   .metric-panel,
   .service-grid,
-  .process-grid {
+  .producer-grid,
+  .value-grid,
+  .process-grid,
+  .rule-band {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -941,7 +1172,7 @@ video {
   }
 
   nav {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     overflow-x: auto;
   }
 
@@ -964,9 +1195,14 @@ video {
 
   .rule-band,
   .region-grid,
+  .cellar-summary-grid,
   .detail-grid,
   .spec-grid,
   .filter-grid,
+  .quick-form,
+  .region-filter-bar,
+  .producer-grid,
+  .value-grid,
   .form-grid,
   .structured-notes,
   .bottle-gallery {

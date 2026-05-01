@@ -5,7 +5,9 @@ import {
   Barcode,
   BookOpen,
   Camera,
+  CalendarDays,
   ChevronLeft,
+  CheckCircle2,
   ClipboardList,
   Edit3,
   Fan,
@@ -15,9 +17,11 @@ import {
   LayoutGrid,
   MapPinned,
   Moon,
+  Phone,
   Plus,
   Save,
   Search,
+  ShoppingBag,
   Sparkles,
   Star,
   Sun,
@@ -33,6 +37,10 @@ const BRAND_NAME = "Lynn Cave Privée";
 const PHOTO_BASE = "/photos/";
 const WINE_STORAGE_KEY = "lynn-cellar-wines";
 const ARCHIVE_STORAGE_KEY = "lynn-cellar-archive";
+const WISHLIST_STORAGE_KEY = "lynn-cellar-wishlist";
+const VENDOR_STORAGE_KEY = "lynn-cellar-vendors";
+const MAINTENANCE_STORAGE_KEY = "lynn-cellar-maintenance";
+const EVENT_STORAGE_KEY = "lynn-cellar-events";
 
 const CELLAR_MODEL = {
   maker: "Allavino",
@@ -82,10 +90,75 @@ const services = [
   ["Estate-Level Oversight", "Vendor notes, maintenance records, household integration, and long-term review."],
 ];
 
+const operatingTiles = [
+  ["Inventory", "Search, sort, and edit the bottles already entered.", "collection", "inventory"],
+  ["Wishlist", "Track future buys, allocations, and special requests.", "tools", "wishlist"],
+  ["Producer Notes", "Keep estate, vineyard, and allocation context with each bottle.", "tools", "producers"],
+  ["Bottle Value", "Watch total value and price bands.", "tools", "value"],
+  ["Drink Window", "See what should move to the front of the cellar.", "tools", "drink"],
+  ["Vendor Contacts", "Save purchase sources and contact notes.", "tools", "vendors"],
+  ["Maintenance", "Track filter, cleaning, and temperature checks.", "tools", "maintenance"],
+  ["Events / Pairings", "Plan dinners, gifts, and hosting bottles.", "tools", "events"],
+];
+
+const regionSignals = [
+  ["California", "CA", "state"],
+  ["Oregon", "OR", "state"],
+  ["Washington", "WA", "state"],
+  ["Arizona", "AZ", "state"],
+  ["New York", "NY", "state"],
+  ["Bordeaux", "FR", "France"],
+  ["Burgundy", "FR", "France"],
+  ["Loire", "FR", "France"],
+  ["Piedmont", "IT", "Italy"],
+  ["Tuscany", "IT", "Italy"],
+  ["Veneto", "IT", "Italy"],
+  ["Australia", "AU", "Australia"],
+];
+
+const regionPresets = [
+  { label: "Napa Valley, California", country: "United States", code: "CA" },
+  { label: "Sonoma County, California", country: "United States", code: "CA" },
+  { label: "Paso Robles, California", country: "United States", code: "CA" },
+  { label: "Santa Lucia Highlands, California", country: "United States", code: "CA" },
+  { label: "Willamette Valley, Oregon", country: "United States", code: "OR" },
+  { label: "Arizona", country: "United States", code: "AZ" },
+  { label: "Bordeaux", country: "France", code: "FR" },
+  { label: "Burgundy", country: "France", code: "FR" },
+  { label: "Loire Valley", country: "France", code: "FR" },
+  { label: "Piedmont", country: "Italy", code: "IT" },
+  { label: "Tuscany", country: "Italy", code: "IT" },
+  { label: "Veneto", country: "Italy", code: "IT" },
+  { label: "Western Australia", country: "Australia", code: "AU" },
+];
+
+const defaultWishlist = [
+  { id: 1, name: "Everyday white refresh", region: "Loire Valley", target: "$25-$45", priority: "High", note: "Crisp dinner whites for the upper-left rotation." },
+  { id: 2, name: "Special dinner red", region: "Napa Valley, California", target: "$80-$140", priority: "Medium", note: "Cabernet or Bordeaux blend for holiday meals." },
+];
+
+const defaultVendors = [
+  { id: 1, name: "Fine Wine Cellars", contact: "Reference links", specialty: "Italy and cellar-worthy reds", note: "Several inventory source URLs point here." },
+  { id: 2, name: "Champion Wine Cellars", contact: "Reference links", specialty: "Piedmont / Nebbiolo", note: "Use for producer and vintage checks." },
+];
+
+const defaultMaintenance = [
+  { id: 1, task: "Verify upper and lower zone temperatures", cadence: "Weekly", status: "Due", note: `${CELLAR_MODEL.upperRange} upper, ${CELLAR_MODEL.lowerRange} lower.` },
+  { id: 2, task: "Clean vents and inspect door seals", cadence: "Monthly", status: "Scheduled", note: "Check both Allavino units." },
+  { id: 3, task: "Review shelf placement after new buys", cadence: "As needed", status: "Active", note: "Keep price sort and top/bottom zone rules intact." },
+];
+
+const defaultEvents = [
+  { id: 1, name: "Steak dinner candidates", date: "Next dinner", pairing: "Cabernet / Bordeaux", note: "Pull structured reds from the right lower zone." },
+  { id: 2, name: "Seafood or patio whites", date: "Warm-weather hosting", pairing: "Sancerre / Chardonnay", note: "Use upper-zone whites with earlier drink windows." },
+];
+
 const defaultFilters = {
   text: "",
   category: "All",
   country: "All",
+  region: "All",
+  badge: "All",
   minVintage: "",
   maxVintage: "",
   minPrice: "",
@@ -206,12 +279,21 @@ function loadArchive() {
   return saved ? JSON.parse(saved) : [];
 }
 
+function loadStoredList(key, fallback) {
+  const saved = localStorage.getItem(key);
+  return saved ? JSON.parse(saved) : fallback;
+}
+
 function saveWines(wines) {
   localStorage.setItem(WINE_STORAGE_KEY, JSON.stringify(applyCellarPlacement(wines)));
 }
 
 function saveArchive(archive) {
   localStorage.setItem(ARCHIVE_STORAGE_KEY, JSON.stringify(archive));
+}
+
+function saveStoredList(key, list) {
+  localStorage.setItem(key, JSON.stringify(list));
 }
 
 function zoneLabel(zone) {
@@ -255,6 +337,13 @@ function regionName(wine) {
   return String(wine.region || "Region pending").split(",").at(-1).trim() || wine.region || "Region pending";
 }
 
+function regionSignal(region, items = []) {
+  const haystack = `${region} ${items.map((wine) => `${wine.region} ${wine.country}`).join(" ")}`;
+  const match = regionSignals.find(([needle]) => haystack.includes(needle));
+  if (match) return { code: match[1], label: match[2] === "state" ? `${match[0]} state` : match[2] };
+  return { code: String(region || "?").slice(0, 2).toUpperCase(), label: "Wine region" };
+}
+
 function wineSearchText(wine) {
   const tasting = typeof wine.tastingNotes === "object" && wine.tastingNotes ? Object.values(wine.tastingNotes).join(" ") : "";
   return [
@@ -279,13 +368,15 @@ function filterWines(wines, filters) {
       const textMatch = !filters.text || wineSearchText(wine).includes(filters.text.toLowerCase());
       const categoryMatch = filters.category === "All" || wine.category === filters.category;
       const countryMatch = filters.country === "All" || wine.country === filters.country;
+      const regionMatch = filters.region === "All" || wine.region === filters.region || regionName(wine) === filters.region;
+      const badgeMatch = filters.badge === "All" || regionSignal(regionName(wine), [wine]).code === filters.badge;
       const vintage = Number(wine.vintage || 0);
       const price = averagePrice(wine);
       const minVintage = filters.minVintage ? Number(filters.minVintage) : -Infinity;
       const maxVintage = filters.maxVintage ? Number(filters.maxVintage) : Infinity;
       const minPrice = filters.minPrice ? Number(filters.minPrice) : -Infinity;
       const maxPrice = filters.maxPrice ? Number(filters.maxPrice) : Infinity;
-      return textMatch && categoryMatch && countryMatch && vintage >= minVintage && vintage <= maxVintage && price >= minPrice && price <= maxPrice;
+      return textMatch && categoryMatch && countryMatch && regionMatch && badgeMatch && vintage >= minVintage && vintage <= maxVintage && price >= minPrice && price <= maxPrice;
     })
     .sort((a, b) => {
       if (filters.sort === "name") return wineTitle(a).localeCompare(wineTitle(b));
@@ -314,12 +405,43 @@ function byDrinkSoon(wines, category) {
     .slice(0, 5);
 }
 
+function drinkWindowStart(wine) {
+  const windowText = inferDrinkWindow(wine);
+  const year = String(windowText).match(/\d{4}/)?.[0];
+  return year ? Number(year) : 0;
+}
+
+function drinkWindowStatus(wine) {
+  const start = drinkWindowStart(wine);
+  const currentYear = new Date().getFullYear();
+  if (!start || start <= currentYear) return "Ready";
+  if (start <= currentYear + 2) return "Soon";
+  return "Hold";
+}
+
+function regionOptionsFromWines(wines) {
+  return Array.from(new Set([...regionPresets.map((item) => item.label), ...wines.map((wine) => wine.region).filter(Boolean)])).sort();
+}
+
+function countryOptionsFromWines(wines) {
+  return Array.from(new Set([...regionPresets.map((item) => item.country), ...wines.map((wine) => wine.country).filter(Boolean)])).sort();
+}
+
+function regionPresetFor(label) {
+  return regionPresets.find((item) => item.label === label);
+}
+
 function App() {
   const [wines, setWines] = useState(loadWines);
   const [archive, setArchive] = useState(loadArchive);
   const [view, setView] = useState("dashboard");
+  const [toolTab, setToolTab] = useState("wishlist");
   const [activeWineId, setActiveWineId] = useState(seedWines[0]?.id);
   const [filters, setFilters] = useState(defaultFilters);
+  const [wishlist, setWishlist] = useState(() => loadStoredList(WISHLIST_STORAGE_KEY, defaultWishlist));
+  const [vendors, setVendors] = useState(() => loadStoredList(VENDOR_STORAGE_KEY, defaultVendors));
+  const [maintenance, setMaintenance] = useState(() => loadStoredList(MAINTENANCE_STORAGE_KEY, defaultMaintenance));
+  const [events, setEvents] = useState(() => loadStoredList(EVENT_STORAGE_KEY, defaultEvents));
   const [scanOpen, setScanOpen] = useState(false);
   const [toast, setToast] = useState("");
   const [theme, setTheme] = useState("dark");
@@ -327,14 +449,21 @@ function App() {
 
   const activeWine = wines.find((wine) => wine.id === activeWineId) || wines[0];
   const stats = useMemo(() => {
-    const total = wines.reduce((sum, wine) => sum + Number(wine.quantity || 0), 0);
+    const bottles = wines.reduce((sum, wine) => sum + Number(wine.quantity || 0), 0);
     const value = wines.reduce((sum, wine) => sum + averagePrice(wine) * Number(wine.quantity || 0), 0);
+    const capacity = CELLAR_CAPACITY * 2;
+    const cellar1 = wines.filter((wine) => wine.cellar === 1);
+    const cellar2 = wines.filter((wine) => wine.cellar === 2);
     return {
-      total,
+      records: wines.length,
+      bottles,
       value,
-      capacity: CELLAR_CAPACITY * 2,
-      cellar1: wines.filter((wine) => wine.cellar === 1).length,
-      cellar2: wines.filter((wine) => wine.cellar === 2).length,
+      capacity,
+      openSlots: Math.max(0, capacity - wines.length),
+      cellar1: cellar1.length,
+      cellar2: cellar2.length,
+      cellar1Bottles: cellar1.reduce((sum, wine) => sum + Number(wine.quantity || 0), 0),
+      cellar2Bottles: cellar2.reduce((sum, wine) => sum + Number(wine.quantity || 0), 0),
       lowStock: wines.filter((wine) => Number(wine.quantity || 0) <= 1).length,
     };
   }, [wines]);
@@ -350,6 +479,17 @@ function App() {
     setWines(placed);
     saveWines(placed);
     return placed;
+  }
+
+  function openTool(tab) {
+    setToolTab(tab);
+    setView("tools");
+  }
+
+  function updateStoredList(key, setter, nextList, message) {
+    setter(nextList);
+    saveStoredList(key, nextList);
+    showToast(message);
   }
 
   function upsertWine(draft) {
@@ -414,6 +554,9 @@ function App() {
 
   return (
     <div className={`app-shell theme-${theme}`}>
+      <datalist id="region-presets">
+        {regionPresets.map((region) => <option key={region.label} value={region.label} />)}
+      </datalist>
       <aside className="sidebar">
         <div className="brand-mark">
           <Wine size={24} />
@@ -430,6 +573,7 @@ function App() {
           <NavButton icon={<LayoutGrid />} active={view === "dashboard"} onClick={() => setView("dashboard")}>Overview</NavButton>
           <NavButton icon={<Wine />} active={view === "cellars"} onClick={() => setView("cellars")}>Cellars</NavButton>
           <NavButton icon={<Grape />} active={view === "collection"} onClick={() => setView("collection")}>Wines</NavButton>
+          <NavButton icon={<Sparkles />} active={view === "tools"} onClick={() => setView("tools")}>Tools</NavButton>
           <NavButton icon={<ClipboardList />} active={view === "specs"} onClick={() => setView("specs")}>Specs</NavButton>
           <NavButton icon={<History />} active={view === "archive"} onClick={() => setView("archive")}>Archive</NavButton>
         </nav>
@@ -451,7 +595,7 @@ function App() {
           </div>
         </header>
 
-        {view === "dashboard" && <Dashboard stats={stats} wines={wines} openWine={(id) => { setActiveWineId(id); setView("detail"); }} setView={setView} />}
+        {view === "dashboard" && <Dashboard stats={stats} wines={wines} openWine={(id) => { setActiveWineId(id); setView("detail"); }} setView={setView} openTool={openTool} />}
         {view === "cellars" && <Cellars wines={wines} openWine={(id) => { setActiveWineId(id); setView("detail"); }} />}
         {view === "collection" && (
           <Collection
@@ -459,6 +603,22 @@ function App() {
             filters={filters}
             setFilters={setFilters}
             openWine={(id) => { setActiveWineId(id); setView("detail"); }}
+          />
+        )}
+        {view === "tools" && (
+          <CellarTools
+            activeTab={toolTab}
+            setActiveTab={setToolTab}
+            wines={wines}
+            openWine={(id) => { setActiveWineId(id); setView("detail"); }}
+            wishlist={wishlist}
+            vendors={vendors}
+            maintenance={maintenance}
+            events={events}
+            setWishlist={(nextList) => updateStoredList(WISHLIST_STORAGE_KEY, setWishlist, nextList, "Wishlist updated.")}
+            setVendors={(nextList) => updateStoredList(VENDOR_STORAGE_KEY, setVendors, nextList, "Vendor contacts updated.")}
+            setMaintenance={(nextList) => updateStoredList(MAINTENANCE_STORAGE_KEY, setMaintenance, nextList, "Maintenance checklist updated.")}
+            setEvents={(nextList) => updateStoredList(EVENT_STORAGE_KEY, setEvents, nextList, "Events and pairings updated.")}
           />
         )}
         {view === "specs" && <SpecsPage />}
@@ -481,6 +641,7 @@ function App() {
 function topbarTitle(view) {
   if (view === "dashboard") return BRAND_NAME;
   if (view === "cellars") return "Cellar Map";
+  if (view === "tools") return "Cellar Tools";
   if (view === "detail") return "Bottle Details";
   if (view === "specs") return "Cellar Specs";
   if (view === "archive") return "Drink Archive";
@@ -496,31 +657,30 @@ function NavButton({ icon, active, children, onClick }) {
   );
 }
 
-function Dashboard({ stats, wines, openWine, setView }) {
-  const premium = [...wines].sort((a, b) => averagePrice(b) - averagePrice(a)).slice(0, 4);
+function Dashboard({ stats, wines, openWine, setView, openTool }) {
   const lowStock = wines.filter((wine) => Number(wine.quantity || 0) <= 1).slice(0, 4);
 
   return (
     <div className="dashboard-page">
       <section className="hero-luxury work-panel">
         <div>
-          <p className="eyebrow">Private wine cellars, curated for the way you live</p>
-          <h2>For collections that deserve more than storage.</h2>
+          <p className="eyebrow">Cellar command center</p>
+          <h2>Know what you own, where it lives, and what to open next.</h2>
           <p>
-            A refined wine cellar planning and collection environment for private homes, estates, and collectors who want every bottle to feel as considered as the rest of the residence.
+            This dashboard is for operating the Lynn collection: physical placement, bottle value, drink windows, low-stock alerts, source notes, and dinner-ready picks.
           </p>
         </div>
         <div className="hero-actions">
-          <a className="primary-link" href="mailto:hello@lynncaveprivee.com">Request a Private Consultation</a>
-          <button className="ghost-button" onClick={() => setView("specs")}>View the Concept</button>
+          <button className="primary-link" onClick={() => setView("cellars")}>Open Cellar Map</button>
+          <button className="ghost-button" onClick={() => setView("collection")}>Search Wines</button>
         </div>
       </section>
 
       <section className="metric-panel">
-        <Metric label="Bottles" value={`${stats.total}/${stats.capacity}`} />
+        <Metric label="Entered Records" value={stats.records} />
+        <Metric label="Physical Capacity" value={`${stats.records}/${stats.capacity}`} note={`${stats.openSlots} open slots`} />
         <Metric label="Collection Value" value={money(stats.value)} />
-        <Metric label="Under $50 Left" value={stats.cellar1} />
-        <Metric label="$50+ Right" value={stats.cellar2} />
+        <Metric label="Actual Bottles" value={stats.bottles} note="Counts quantities" />
       </section>
 
       <Section title="A Private Cellar, Properly Organized" icon={<BookOpen size={18} />}>
@@ -537,8 +697,11 @@ function Dashboard({ stats, wines, openWine, setView }) {
       <div className="split-grid">
         <Section title="Beyond the Cellar" icon={<Sparkles size={18} />}>
           <div className="system-grid">
-            {["Inventory", "Wishlist", "Producer Notes", "Bottle Value", "Drink Window", "Vendor Contacts", "Maintenance", "Events / Pairings"].map((item) => (
-              <span key={item}>{item}</span>
+            {operatingTiles.map(([item, body, target, tab]) => (
+              <button key={item} onClick={() => (target === "tools" ? openTool(tab) : setView(target))}>
+                <strong>{item}</strong>
+                <small>{body}</small>
+              </button>
             ))}
           </div>
         </Section>
@@ -558,21 +721,22 @@ function Dashboard({ stats, wines, openWine, setView }) {
         </div>
       </Section>
 
-      <Section title="Private Cellar Review" icon={<ClipboardList size={18} />}>
-        <p className="quiet-copy">
-          Whether you are building a new cellar, reorganizing an existing collection, or simply want a more elegant way to manage what you own, the process begins with a private review.
-        </p>
-        <a className="primary-link inline" href="mailto:hello@lynncaveprivee.com">Inquire Privately</a>
+      <Section title="Cellar Split" icon={<ClipboardList size={18} />}>
+        <div className="cellar-summary-grid">
+          <Metric label="Left Cellar Under $50" value={stats.cellar1} note={`${stats.cellar1Bottles} bottles by quantity`} />
+          <Metric label="Right Cellar $50+" value={stats.cellar2} note={`${stats.cellar2Bottles} bottles by quantity`} />
+        </div>
       </Section>
     </div>
   );
 }
 
-function Metric({ label, value }) {
+function Metric({ label, value, note }) {
   return (
     <div className="metric">
       <span>{label}</span>
       <strong>{value}</strong>
+      {note && <small>{note}</small>}
     </div>
   );
 }
@@ -590,26 +754,59 @@ function Section({ title, icon, children }) {
 }
 
 function RegionOverview({ wines, openWine }) {
+  const [country, setCountry] = useState("All");
+  const [signalCode, setSignalCode] = useState("All");
+  const [category, setCategory] = useState("All");
+  const countries = ["All", ...countryOptionsFromWines(wines)];
+  const signalOptions = ["All", ...Array.from(new Set(wines.map((wine) => regionSignal(regionName(wine), [wine]).code))).sort()];
+  const categories = ["All", ...Array.from(new Set(wines.map((wine) => wine.category).filter(Boolean))).sort()];
+  const visibleWines = wines.filter((wine) => {
+    const signal = regionSignal(regionName(wine), [wine]).code;
+    return (country === "All" || wine.country === country)
+      && (signalCode === "All" || signal === signalCode)
+      && (category === "All" || wine.category === category);
+  });
   const groups = Object.entries(
-    wines.reduce((acc, wine) => {
+    visibleWines.reduce((acc, wine) => {
       const key = regionName(wine);
       acc[key] = [...(acc[key] || []), wine];
       return acc;
     }, {}),
   )
     .sort(([a], [b]) => a.localeCompare(b))
-    .slice(0, 8);
+    .slice(0, 12);
 
   return (
-    <div className="region-grid">
-      {groups.map(([region, items]) => (
-        <article className="region-card" key={region}>
-          <div className="map-dot" />
-          <h3>{region}</h3>
-          <BottleList wines={items.slice(0, 4)} openWine={openWine} compact />
-        </article>
-      ))}
-    </div>
+    <>
+      <div className="region-filter-bar">
+        <label>Country<select value={country} onChange={(event) => setCountry(event.target.value)}>{countries.map((item) => <option key={item}>{item}</option>)}</select></label>
+        <label>State / Badge<select value={signalCode} onChange={(event) => setSignalCode(event.target.value)}>{signalOptions.map((item) => <option key={item}>{item}</option>)}</select></label>
+        <label>Type<select value={category} onChange={(event) => setCategory(event.target.value)}>{categories.map((item) => <option key={item}>{item}</option>)}</select></label>
+        <button className="ghost-button" onClick={() => { setCountry("All"); setSignalCode("All"); setCategory("All"); }}>Reset</button>
+      </div>
+      {groups.length ? (
+        <div className="region-grid">
+          {groups.map(([region, items]) => {
+            const signal = regionSignal(region, items);
+            const bottles = items.reduce((sum, wine) => sum + Number(wine.quantity || 0), 0);
+            return (
+              <article className="region-card" key={region}>
+                <div className="region-backdrop" aria-hidden="true">{signal.code}</div>
+                <div className="region-card-head">
+                  <div className="map-dot" />
+                  <span>{signal.label}</span>
+                </div>
+                <h3>{region}</h3>
+                <p>{items.length} records · {bottles} bottles</p>
+                <BottleList wines={items.slice(0, 4)} openWine={openWine} compact />
+              </article>
+            );
+          })}
+        </div>
+      ) : (
+        <EmptyState title="No regions match those filters" body="Adjust the country, badge, or type filter." />
+      )}
+    </>
   );
 }
 
@@ -656,7 +853,7 @@ function Cellars({ wines, openWine }) {
               <p className="eyebrow">Cellar {cellar}</p>
               <h2>{cellar === 1 ? "Left Cellar · Under $50" : "Right Cellar · $50 and Above"}</h2>
             </div>
-            <span className="pill">{wines.filter((wine) => wine.cellar === cellar).length}/{CELLAR_CAPACITY}</span>
+            <span className="pill">{wines.filter((wine) => wine.cellar === cellar).length}/{CELLAR_CAPACITY} records placed</span>
           </div>
           <div className="cellar-layout">
             <Zone title="Upper Whites" cellar={cellar} zone="top" wines={wines} openWine={openWine} />
@@ -669,12 +866,22 @@ function Cellars({ wines, openWine }) {
 }
 
 function CellarRules() {
+  const rules = [
+    ["Left", "Under $50", "Every bottle below $50 is assigned to the left cellar."],
+    ["Right", "$50 and above", "Every bottle at $50 or higher is assigned to the right cellar."],
+    ["Zones", "Whites top, reds bottom", "Sparkling, whites, rosé, and dessert wines use the upper zone. Reds use the lower zone."],
+    ["Order", "Low to high price", "Within each zone, bottles are sorted from lowest price to highest price."],
+    ["Preview", "Hover any slot", "Hover a filled slot to see the label, value, varietal, shelf, and position."],
+  ];
   return (
     <section className="rule-band">
-      <span>Left cellar holds anything under $50.</span>
-      <span>Right cellar holds $50 and above.</span>
-      <span>Whites live on top, reds on bottom, ordered low price to high price.</span>
-      <span>Hover any slot to preview the bottle.</span>
+      {rules.map(([label, title, body]) => (
+        <article key={label}>
+          <span>{label}</span>
+          <strong>{title}</strong>
+          <p>{body}</p>
+        </article>
+      ))}
     </section>
   );
 }
@@ -717,6 +924,331 @@ function Zone({ title, cellar, zone, wines, openWine }) {
           );
         })}
       </div>
+    </div>
+  );
+}
+
+function CellarTools({
+  activeTab,
+  setActiveTab,
+  wines,
+  openWine,
+  wishlist,
+  vendors,
+  maintenance,
+  events,
+  setWishlist,
+  setVendors,
+  setMaintenance,
+  setEvents,
+}) {
+  const tabs = [
+    ["wishlist", "Wishlist", <ShoppingBag size={16} />],
+    ["producers", "Producer Notes", <BookOpen size={16} />],
+    ["value", "Bottle Value", <BadgeDollarSign size={16} />],
+    ["drink", "Drink Windows", <Wine size={16} />],
+    ["vendors", "Vendors", <Phone size={16} />],
+    ["maintenance", "Maintenance", <CheckCircle2 size={16} />],
+    ["events", "Events", <CalendarDays size={16} />],
+  ];
+
+  return (
+    <div className="tools-page">
+      <section className="tool-tabs work-panel">
+        {tabs.map(([id, label, icon]) => (
+          <button key={id} className={activeTab === id ? "active" : ""} onClick={() => setActiveTab(id)}>
+            {icon}
+            <span>{label}</span>
+          </button>
+        ))}
+      </section>
+
+      {activeTab === "wishlist" && <WishlistTool items={wishlist} setItems={setWishlist} />}
+      {activeTab === "producers" && <ProducerTool wines={wines} openWine={openWine} />}
+      {activeTab === "value" && <ValueTool wines={wines} openWine={openWine} />}
+      {activeTab === "drink" && <DrinkWindowTool wines={wines} openWine={openWine} />}
+      {activeTab === "vendors" && <VendorTool items={vendors} setItems={setVendors} />}
+      {activeTab === "maintenance" && <MaintenanceTool items={maintenance} setItems={setMaintenance} />}
+      {activeTab === "events" && <EventTool items={events} setItems={setEvents} wines={wines} openWine={openWine} />}
+    </div>
+  );
+}
+
+function nextId(items) {
+  return Math.max(0, ...items.map((item) => Number(item.id || 0))) + 1;
+}
+
+function WishlistTool({ items, setItems }) {
+  const [draft, setDraft] = useState({ name: "", region: "", target: "", priority: "Medium", note: "" });
+
+  function addItem(event) {
+    event.preventDefault();
+    if (!draft.name.trim()) return;
+    setItems([{ ...draft, id: nextId(items) }, ...items]);
+    setDraft({ name: "", region: "", target: "", priority: "Medium", note: "" });
+  }
+
+  return (
+    <section className="work-panel tool-panel">
+      <div className="section-title">
+        <span><ShoppingBag size={18} /></span>
+        <h2>Wishlist</h2>
+      </div>
+      <form className="quick-form" onSubmit={addItem}>
+        <input value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} placeholder="Bottle, producer, or style" />
+        <input value={draft.region} onChange={(event) => setDraft({ ...draft, region: event.target.value })} placeholder="Region" list="region-presets" />
+        <input value={draft.target} onChange={(event) => setDraft({ ...draft, target: event.target.value })} placeholder="Target price" />
+        <select value={draft.priority} onChange={(event) => setDraft({ ...draft, priority: event.target.value })}>
+          {["High", "Medium", "Low"].map((item) => <option key={item}>{item}</option>)}
+        </select>
+        <input className="wide" value={draft.note} onChange={(event) => setDraft({ ...draft, note: event.target.value })} placeholder="Why it belongs in the cellar" />
+        <button className="save-button" type="submit"><Plus size={18} /> Add wishlist item</button>
+      </form>
+      <ToolList
+        items={items}
+        setItems={setItems}
+        render={(item) => (
+          <>
+            <strong>{item.name}</strong>
+            <span>{item.region || "Region pending"} · {item.target || "No target"} · {item.priority}</span>
+            <p>{item.note}</p>
+          </>
+        )}
+      />
+    </section>
+  );
+}
+
+function ProducerTool({ wines, openWine }) {
+  const producers = Object.entries(
+    wines.reduce((acc, wine) => {
+      const key = wine.producer || "Producer pending";
+      acc[key] = [...(acc[key] || []), wine];
+      return acc;
+    }, {}),
+  ).sort(([a], [b]) => a.localeCompare(b));
+
+  return (
+    <section className="work-panel tool-panel">
+      <div className="section-title">
+        <span><BookOpen size={18} /></span>
+        <h2>Producer Notes</h2>
+      </div>
+      <div className="producer-grid">
+        {producers.map(([producer, items]) => (
+          <article className="tool-card" key={producer}>
+            <strong>{producer}</strong>
+            <span>{items.length} records · {money(items.reduce((sum, wine) => sum + averagePrice(wine), 0) / items.length)} avg</span>
+            <p>{buildVineyardNote(items[0])}</p>
+            <BottleList wines={items.slice(0, 3)} openWine={openWine} compact />
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ValueTool({ wines, openWine }) {
+  const bands = [
+    ["Everyday under $50", wines.filter((wine) => averagePrice(wine) < 50)],
+    ["Hosting $50-$99", wines.filter((wine) => averagePrice(wine) >= 50 && averagePrice(wine) < 100)],
+    ["Reserve $100+", wines.filter((wine) => averagePrice(wine) >= 100)],
+  ];
+
+  return (
+    <section className="work-panel tool-panel">
+      <div className="section-title">
+        <span><BadgeDollarSign size={18} /></span>
+        <h2>Bottle Value</h2>
+      </div>
+      <div className="value-grid">
+        {bands.map(([label, items]) => (
+          <article className="tool-card" key={label}>
+            <strong>{label}</strong>
+            <span>{items.length} records · {money(items.reduce((sum, wine) => sum + averagePrice(wine) * Number(wine.quantity || 0), 0))}</span>
+            <BottleList wines={[...items].sort((a, b) => averagePrice(b) - averagePrice(a)).slice(0, 5)} openWine={openWine} compact />
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function DrinkWindowTool({ wines, openWine }) {
+  const groups = ["Ready", "Soon", "Hold"].map((status) => [
+    status,
+    wines.filter((wine) => drinkWindowStatus(wine) === status).sort((a, b) => drinkWindowStart(a) - drinkWindowStart(b) || averagePrice(b) - averagePrice(a)),
+  ]);
+
+  return (
+    <section className="work-panel tool-panel">
+      <div className="section-title">
+        <span><Wine size={18} /></span>
+        <h2>Drink Windows</h2>
+      </div>
+      <div className="value-grid">
+        {groups.map(([label, items]) => (
+          <article className="tool-card" key={label}>
+            <strong>{label}</strong>
+            <span>{items.length} records</span>
+            <BottleList wines={items.slice(0, 6)} openWine={openWine} compact />
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function VendorTool({ items, setItems }) {
+  const [draft, setDraft] = useState({ name: "", contact: "", specialty: "", note: "" });
+
+  function addItem(event) {
+    event.preventDefault();
+    if (!draft.name.trim()) return;
+    setItems([{ ...draft, id: nextId(items) }, ...items]);
+    setDraft({ name: "", contact: "", specialty: "", note: "" });
+  }
+
+  return (
+    <section className="work-panel tool-panel">
+      <div className="section-title">
+        <span><Phone size={18} /></span>
+        <h2>Vendor Contacts</h2>
+      </div>
+      <form className="quick-form" onSubmit={addItem}>
+        <input value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} placeholder="Vendor name" />
+        <input value={draft.contact} onChange={(event) => setDraft({ ...draft, contact: event.target.value })} placeholder="Contact / phone / email" />
+        <input value={draft.specialty} onChange={(event) => setDraft({ ...draft, specialty: event.target.value })} placeholder="Specialty" />
+        <input className="wide" value={draft.note} onChange={(event) => setDraft({ ...draft, note: event.target.value })} placeholder="Buying notes" />
+        <button className="save-button" type="submit"><Plus size={18} /> Add vendor</button>
+      </form>
+      <ToolList
+        items={items}
+        setItems={setItems}
+        render={(item) => (
+          <>
+            <strong>{item.name}</strong>
+            <span>{item.contact || "Contact pending"} · {item.specialty || "General"}</span>
+            <p>{item.note}</p>
+          </>
+        )}
+      />
+    </section>
+  );
+}
+
+function MaintenanceTool({ items, setItems }) {
+  const [draft, setDraft] = useState({ task: "", cadence: "Monthly", status: "Due", note: "" });
+
+  function addItem(event) {
+    event.preventDefault();
+    if (!draft.task.trim()) return;
+    setItems([{ ...draft, id: nextId(items) }, ...items]);
+    setDraft({ task: "", cadence: "Monthly", status: "Due", note: "" });
+  }
+
+  function toggleStatus(item) {
+    const status = item.status === "Done" ? "Due" : "Done";
+    setItems(items.map((entry) => (entry.id === item.id ? { ...entry, status } : entry)));
+  }
+
+  return (
+    <section className="work-panel tool-panel">
+      <div className="section-title">
+        <span><CheckCircle2 size={18} /></span>
+        <h2>Maintenance</h2>
+      </div>
+      <form className="quick-form" onSubmit={addItem}>
+        <input value={draft.task} onChange={(event) => setDraft({ ...draft, task: event.target.value })} placeholder="Task" />
+        <select value={draft.cadence} onChange={(event) => setDraft({ ...draft, cadence: event.target.value })}>
+          {["Weekly", "Monthly", "Quarterly", "As needed"].map((item) => <option key={item}>{item}</option>)}
+        </select>
+        <select value={draft.status} onChange={(event) => setDraft({ ...draft, status: event.target.value })}>
+          {["Due", "Scheduled", "Active", "Done"].map((item) => <option key={item}>{item}</option>)}
+        </select>
+        <input className="wide" value={draft.note} onChange={(event) => setDraft({ ...draft, note: event.target.value })} placeholder="Notes" />
+        <button className="save-button" type="submit"><Plus size={18} /> Add maintenance task</button>
+      </form>
+      <div className="tool-list">
+        {items.map((item) => (
+          <article className="tool-card horizontal" key={item.id}>
+            <button className={`status-toggle ${item.status === "Done" ? "done" : ""}`} onClick={() => toggleStatus(item)}>
+              <CheckCircle2 size={18} />
+            </button>
+            <div>
+              <strong>{item.task}</strong>
+              <span>{item.cadence} · {item.status}</span>
+              <p>{item.note}</p>
+            </div>
+            <button className="close-button" onClick={() => setItems(items.filter((entry) => entry.id !== item.id))}><X size={16} /></button>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function EventTool({ items, setItems, wines, openWine }) {
+  const [draft, setDraft] = useState({ name: "", date: "", pairing: "", note: "" });
+  const dinnerWines = wines
+    .filter((wine) => drinkWindowStatus(wine) !== "Hold")
+    .sort((a, b) => averagePrice(b) - averagePrice(a))
+    .slice(0, 6);
+
+  function addItem(event) {
+    event.preventDefault();
+    if (!draft.name.trim()) return;
+    setItems([{ ...draft, id: nextId(items) }, ...items]);
+    setDraft({ name: "", date: "", pairing: "", note: "" });
+  }
+
+  return (
+    <section className="work-panel tool-panel">
+      <div className="section-title">
+        <span><CalendarDays size={18} /></span>
+        <h2>Events / Pairings</h2>
+      </div>
+      <form className="quick-form" onSubmit={addItem}>
+        <input value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} placeholder="Dinner, gift, or event" />
+        <input value={draft.date} onChange={(event) => setDraft({ ...draft, date: event.target.value })} placeholder="Date / occasion" />
+        <input value={draft.pairing} onChange={(event) => setDraft({ ...draft, pairing: event.target.value })} placeholder="Pairing idea" />
+        <input className="wide" value={draft.note} onChange={(event) => setDraft({ ...draft, note: event.target.value })} placeholder="Bottle notes" />
+        <button className="save-button" type="submit"><Plus size={18} /> Add event</button>
+      </form>
+      <div className="split-grid">
+        <ToolList
+          items={items}
+          setItems={setItems}
+          render={(item) => (
+            <>
+              <strong>{item.name}</strong>
+              <span>{item.date || "Date pending"} · {item.pairing || "Pairing pending"}</span>
+              <p>{item.note}</p>
+            </>
+          )}
+        />
+        <article className="tool-card">
+          <strong>Dinner-ready bottles</strong>
+          <span>Ready or soon, sorted by value</span>
+          <BottleList wines={dinnerWines} openWine={openWine} compact />
+        </article>
+      </div>
+    </section>
+  );
+}
+
+function ToolList({ items, setItems, render }) {
+  return (
+    <div className="tool-list">
+      {items.map((item) => (
+        <article className="tool-card" key={item.id}>
+          {render(item)}
+          <button className="ghost-button" onClick={() => setItems(items.filter((entry) => entry.id !== item.id))}>
+            <Trash2 size={16} />
+            Remove
+          </button>
+        </article>
+      ))}
     </div>
   );
 }
@@ -785,6 +1317,8 @@ function Spec({ label, value }) {
 function Collection({ wines, filters, setFilters, openWine }) {
   const filtered = useMemo(() => filterWines(wines, filters), [wines, filters]);
   const countries = ["All", ...Array.from(new Set(wines.map((wine) => wine.country).filter(Boolean))).sort()];
+  const regions = ["All", ...regionOptionsFromWines(wines)];
+  const badges = ["All", ...Array.from(new Set(wines.map((wine) => regionSignal(regionName(wine), [wine]).code))).sort()];
   const categories = ["All", ...Array.from(new Set(wines.map((wine) => wine.category).filter(Boolean))).sort()];
 
   function setFilter(key, value) {
@@ -805,6 +1339,8 @@ function Collection({ wines, filters, setFilters, openWine }) {
         <div className="filter-grid">
           <label>Type<select value={filters.category} onChange={(event) => setFilter("category", event.target.value)}>{categories.map((item) => <option key={item}>{item}</option>)}</select></label>
           <label>Country<select value={filters.country} onChange={(event) => setFilter("country", event.target.value)}>{countries.map((item) => <option key={item}>{item}</option>)}</select></label>
+          <label>Region<select value={filters.region} onChange={(event) => setFilter("region", event.target.value)}>{regions.map((item) => <option key={item}>{item}</option>)}</select></label>
+          <label>Badge<select value={filters.badge} onChange={(event) => setFilter("badge", event.target.value)}>{badges.map((item) => <option key={item}>{item}</option>)}</select></label>
           <label>Min Vintage<input inputMode="numeric" value={filters.minVintage} onChange={(event) => setFilter("minVintage", event.target.value)} /></label>
           <label>Max Vintage<input inputMode="numeric" value={filters.maxVintage} onChange={(event) => setFilter("maxVintage", event.target.value)} /></label>
           <label>Min Price<input inputMode="decimal" value={filters.minPrice} onChange={(event) => setFilter("minPrice", event.target.value)} /></label>
@@ -1010,13 +1546,25 @@ function WineForm({ draft, setDraft, includeNotes = false }) {
     setDraft((current) => ({ ...current, [key]: value }));
   }
 
+  function setRegion(value) {
+    const preset = regionPresetFor(value);
+    setDraft((current) => ({
+      ...current,
+      region: value,
+      country: preset?.country || current.country,
+    }));
+  }
+
   return (
     <div className="form-grid">
       <label>Producer<input value={draft.producer} onChange={(event) => setField("producer", event.target.value)} /></label>
       <label>Wine Name<input value={draft.wineName} onChange={(event) => setField("wineName", event.target.value)} /></label>
       <label>Vintage<input inputMode="numeric" value={draft.vintage} onChange={(event) => setField("vintage", event.target.value)} /></label>
-      <label>Region<input value={draft.region} onChange={(event) => setField("region", event.target.value)} /></label>
-      <label>Country<input value={draft.country} onChange={(event) => setField("country", event.target.value)} /></label>
+      <label>Region<input value={draft.region} list="region-presets" onChange={(event) => setRegion(event.target.value)} /></label>
+      <label>Country<select value={draft.country} onChange={(event) => setField("country", event.target.value)}>
+        <option value="">Country pending</option>
+        {Array.from(new Set(regionPresets.map((item) => item.country))).sort().map((country) => <option key={country}>{country}</option>)}
+      </select></label>
       <label>Varietal<input value={draft.variety} onChange={(event) => setField("variety", event.target.value)} /></label>
       <label>Type<select value={draft.category} onChange={(event) => setField("category", event.target.value)}>
         {["Red", "White", "Sparkling", "Rose", "Dessert"].map((item) => <option key={item}>{item}</option>)}
