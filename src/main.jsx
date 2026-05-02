@@ -672,13 +672,6 @@ function Dashboard({ stats, wines, openWine, setView, openTool }) {
   return (
     <div className="dashboard-page">
       <section className="hero-luxury work-panel">
-        <div>
-          <p className="eyebrow">Cellar command center</p>
-          <h2>Know what you own, where it lives, and what to open next.</h2>
-          <p>
-            This dashboard is for operating the Lynn collection: physical placement, bottle value, drink windows, low-stock alerts, source notes, and dinner-ready picks.
-          </p>
-        </div>
         <div className="hero-actions">
           <button className="primary-link" onClick={() => setView("cellars")}>Open Cellar Map</button>
           <button className="ghost-button" onClick={() => setView("collection")}>Search Wines</button>
