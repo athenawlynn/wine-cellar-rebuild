@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   BadgeDollarSign,
@@ -7,6 +7,7 @@ import {
   Camera,
   CalendarDays,
   ChevronLeft,
+  ChevronRight,
   CheckCircle2,
   ClipboardList,
   Edit3,
@@ -19,6 +20,7 @@ import {
   Moon,
   Phone,
   Plus,
+  RotateCcw,
   Save,
   Search,
   ShoppingBag,
@@ -249,6 +251,15 @@ function placementSort(a, b) {
   );
 }
 
+function cellarOrderedWines(wines) {
+  return [...wines].sort((a, b) => (
+    Number(a.cellar || 0) - Number(b.cellar || 0) ||
+    String(a.zone || "").localeCompare(String(b.zone || "")) ||
+    Number(a.slot || 0) - Number(b.slot || 0) ||
+    wineTitle(a).localeCompare(wineTitle(b))
+  ));
+}
+
 function applyCellarPlacement(wines) {
   const grouped = new Map();
 
@@ -284,7 +295,8 @@ function loadWines() {
 
 function loadArchive() {
   const saved = localStorage.getItem(ARCHIVE_STORAGE_KEY);
-  return saved ? JSON.parse(saved) : seedArchive;
+  const archive = saved ? JSON.parse(saved) : seedArchive;
+  return archive.map(normalizeArchiveEntry);
 }
 
 function loadStoredList(key, fallback) {
@@ -297,7 +309,18 @@ function saveWines(wines) {
 }
 
 function saveArchive(archive) {
-  localStorage.setItem(ARCHIVE_STORAGE_KEY, JSON.stringify(archive));
+  localStorage.setItem(ARCHIVE_STORAGE_KEY, JSON.stringify(archive.map(normalizeArchiveEntry)));
+}
+
+function normalizeArchiveEntry(entry) {
+  const wine = normalizeWine({ ...(entry.wine || {}), quantity: Number(entry.wine?.quantity || 1) || 1 });
+  return {
+    id: entry.id || `${wine.id || "archive"}-${entry.consumedAt || Date.now()}`,
+    consumedAt: entry.consumedAt || new Date().toISOString(),
+    reason: entry.reason || "",
+    ...entry,
+    wine,
+  };
 }
 
 function saveStoredList(key, list) {
@@ -457,6 +480,7 @@ function App() {
   const toastTimer = useRef(null);
 
   const activeWine = wines.find((wine) => wine.id === activeWineId) || wines[0];
+  const cellarSequence = useMemo(() => cellarOrderedWines(wines), [wines]);
   const stats = useMemo(() => {
     const bottles = wines.reduce((sum, wine) => sum + Number(wine.quantity || 0), 0);
     const value = wines.reduce((sum, wine) => sum + averagePrice(wine) * Number(wine.quantity || 0), 0);
@@ -544,10 +568,15 @@ function App() {
     const wine = wines.find((item) => item.id === id);
     if (!wine) return;
     if (!window.confirm(`Archive one bottle of ${wineTitle(wine)} as consumed?`)) return;
+    const archivedWine = normalizeWine({
+      ...wine,
+      quantity: 1,
+      status: "Consumed",
+    });
     const consumed = {
       id: `${id}-${Date.now()}`,
       consumedAt: new Date().toISOString(),
-      wine,
+      wine: archivedWine,
     };
     const nextArchive = [consumed, ...archive];
     const nextWines = wine.quantity > 1
@@ -559,6 +588,48 @@ function App() {
     setActiveWineId(placed[0]?.id);
     setView("archive");
     showToast("Bottle archived in drink history.");
+  }
+
+  function restoreArchivedWine(entryId) {
+    const entry = archive.find((item) => item.id === entryId);
+    if (!entry?.wine) return;
+    const archivedWine = normalizeWine(entry.wine);
+    const existing = wines.find((wine) => wine.id === archivedWine.id);
+    const restoredId = archivedWine.id || Math.max(0, ...wines.map((wine) => wine.id)) + 1;
+    const nextWines = existing
+      ? wines.map((wine) => (
+        wine.id === existing.id
+          ? normalizeWine({ ...wine, quantity: Number(wine.quantity || 0) + 1, status: "Ready" })
+          : wine
+      ))
+      : [
+        ...wines,
+        normalizeWine({
+          ...archivedWine,
+          id: restoredId,
+          quantity: 1,
+          status: "Ready",
+          dateAdded: archivedWine.dateAdded || new Date().toISOString().slice(0, 10),
+        }),
+      ];
+    persistWines(nextWines);
+    const nextArchive = archive.filter((item) => item.id !== entryId);
+    setArchive(nextArchive);
+    saveArchive(nextArchive);
+    setActiveWineId(existing?.id || restoredId);
+    setView("detail");
+    showToast("Bottle restored to the cellar.");
+  }
+
+  function navigateActiveWine(direction) {
+    if (!cellarSequence.length) return;
+    const currentIndex = cellarSequence.findIndex((wine) => wine.id === activeWineId);
+    const start = currentIndex >= 0 ? currentIndex : 0;
+    const nextIndex = (start + direction + cellarSequence.length) % cellarSequence.length;
+    const nextWine = cellarSequence[nextIndex];
+    if (!nextWine) return;
+    setActiveWineId(nextWine.id);
+    setView("detail");
   }
 
   return (
@@ -631,8 +702,17 @@ function App() {
           />
         )}
         {view === "specs" && <SpecsPage />}
-        {view === "archive" && <ArchivePage archive={archive} openWine={(wine) => { setActiveWineId(wine.id); setView("detail"); }} />}
-        {view === "detail" && activeWine && <WineDetail wine={activeWine} back={() => setView("collection")} onDrink={drinkWine} onUpdate={updateWine} />}
+        {view === "archive" && <ArchivePage archive={archive} onRestore={restoreArchivedWine} />}
+        {view === "detail" && activeWine && (
+          <WineDetail
+            wine={activeWine}
+            back={() => setView("collection")}
+            onDrink={drinkWine}
+            onUpdate={updateWine}
+            onNavigate={navigateActiveWine}
+            sequence={cellarSequence}
+          />
+        )}
 
         <footer className="site-footer">
           <strong>{BRAND_NAME}</strong>
@@ -1384,9 +1464,34 @@ function Collection({ wines, filters, setFilters, openWine }) {
   );
 }
 
-function WineDetail({ wine, back, onDrink, onUpdate }) {
+function WineDetail({ wine, back, onDrink, onUpdate, onNavigate, sequence = [] }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(() => formFromWine(wine));
+  const currentIndex = sequence.findIndex((item) => item.id === wine.id);
+
+  useEffect(() => {
+    setDraft(formFromWine(wine));
+    setEditing(false);
+  }, [wine.id]);
+
+  useEffect(() => {
+    function handleKey(event) {
+      const activeTag = document.activeElement?.tagName;
+      const isTyping = ["INPUT", "TEXTAREA", "SELECT"].includes(activeTag);
+      if (editing || isTyping || !onNavigate || sequence.length < 2) return;
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        onNavigate(-1);
+      }
+      if (event.key === "ArrowRight") {
+        event.preventDefault();
+        onNavigate(1);
+      }
+    }
+
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [editing, onNavigate, sequence.length]);
 
   function saveEdit(event) {
     event.preventDefault();
@@ -1398,6 +1503,13 @@ function WineDetail({ wine, back, onDrink, onUpdate }) {
   return (
     <div className="detail-page">
       <button className="back-button" onClick={back}><ChevronLeft size={18} /> Back to collection</button>
+      {sequence.length > 1 && (
+        <div className="detail-nav-inline" aria-label="Cellar order navigation">
+          <button className="ghost-button" onClick={() => onNavigate?.(-1)}><ChevronLeft size={17} /> Previous</button>
+          <span>Cellar order {currentIndex >= 0 ? currentIndex + 1 : 1} of {sequence.length}</span>
+          <button className="ghost-button" onClick={() => onNavigate?.(1)}>Next <ChevronRight size={17} /></button>
+        </div>
+      )}
 
       <section className="detail-hero work-panel">
         <div className="bottle-gallery">
@@ -1592,24 +1704,62 @@ function WineForm({ draft, setDraft, includeNotes = false }) {
   );
 }
 
-function ArchivePage({ archive }) {
+function ArchivePage({ archive, onRestore }) {
+  const archiveValue = archive.reduce((sum, entry) => sum + averagePrice(entry.wine), 0);
   return (
     <div className="archive-page">
       {archive.length ? (
+        <>
+        <section className="archive-summary work-panel">
+          <div>
+            <p className="eyebrow">Drink history</p>
+            <h2>{archive.length} archived bottle{archive.length === 1 ? "" : "s"}</h2>
+          </div>
+          <div className="archive-summary-metrics">
+            <span>{money(archiveValue)} tracked value</span>
+            <span>{new Date(archive[0].consumedAt).toLocaleDateString()} latest</span>
+          </div>
+        </section>
         <div className="archive-list">
           {archive.map((entry) => (
-            <article className="archive-card" key={entry.id}>
-              <span>{new Date(entry.consumedAt).toLocaleString()}</span>
-              <h3>{wineTitle(entry.wine)}</h3>
-              <p>{entry.wine.region} · {entry.wine.variety} · {money(averagePrice(entry.wine))}</p>
-              {entry.reason && <p>{entry.reason}</p>}
-            </article>
+            <ArchiveCard key={entry.id} entry={entry} onRestore={onRestore} />
           ))}
         </div>
+        </>
       ) : (
         <EmptyState title="No bottles consumed yet" body="Use the Drink button on a bottle detail page to archive it here for future reference." />
       )}
     </div>
+  );
+}
+
+function ArchiveCard({ entry, onRestore }) {
+  const wine = normalizeWine(entry.wine || {});
+  const photos = [wine.frontPhoto, wine.backPhoto].filter(Boolean);
+  return (
+    <article className="archive-card">
+      <div className={`archive-photo-strip ${photos.length < 2 ? "single" : ""}`}>
+        {photos.length ? photos.map((photo, index) => (
+          <img key={`${entry.id}-${photo}`} src={photoUrl(photo)} alt={`${wineTitle(wine)} ${index === 0 ? "front" : "back"} label`} />
+        )) : (
+          <div className="archive-photo-placeholder"><Wine size={30} /></div>
+        )}
+      </div>
+      <div className="archive-card-body">
+        <span className="archive-date">{new Date(entry.consumedAt).toLocaleString()}</span>
+        <h3>{wineTitle(wine)}</h3>
+        <p>{wine.region} · {wine.variety} · {money(averagePrice(wine))}</p>
+        <div className="archive-meta">
+          <span>{wine.category}</span>
+          <span>{wine.country || "Country pending"}</span>
+          <span>Qty 1</span>
+        </div>
+        {entry.reason && <p className="archive-reason">{entry.reason}</p>}
+        <button className="ghost-button restore-button" onClick={() => onRestore(entry.id)}>
+          <RotateCcw size={17} /> Restore to cellar
+        </button>
+      </div>
+    </article>
   );
 }
 

@@ -269,6 +269,19 @@ p {
   margin-bottom: 16px;
 }
 
+.detail-nav-inline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: -4px 0 16px;
+}
+
+.detail-nav-inline span {
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
 .work-panel,
 .metric-panel,
 .service-card,
@@ -1021,22 +1034,99 @@ textarea {
 
 .archive-list {
   display: grid;
-  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
 }
 
 .archive-card {
   display: grid;
-  grid-template-columns: 72px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 14px;
-  padding: 12px;
+  overflow: hidden;
+  align-content: start;
+  padding: 0;
 }
 
-.archive-card img {
-  width: 72px;
-  height: 88px;
-  border-radius: 6px;
+.archive-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.archive-summary h2 {
+  margin: 0;
+}
+
+.archive-summary-metrics,
+.archive-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.archive-summary-metrics span,
+.archive-meta span {
+  padding: 5px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.archive-photo-strip {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  aspect-ratio: 16 / 8;
+  background: var(--line);
+}
+
+.archive-photo-strip.single {
+  grid-template-columns: 1fr;
+}
+
+.archive-photo-strip img,
+.archive-photo-placeholder {
+  width: 100%;
+  height: 100%;
+  min-height: 154px;
+  background: var(--panel-soft);
+}
+
+.archive-photo-strip img {
   object-fit: cover;
+}
+
+.archive-photo-placeholder {
+  display: grid;
+  place-items: center;
+  color: var(--gold);
+}
+
+.archive-card-body {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+}
+
+.archive-date {
+  color: var(--faint);
+  font-size: 0.74rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.archive-card h3 {
+  margin: 0;
+}
+
+.archive-reason {
+  padding-left: 10px;
+  border-left: 2px solid var(--gold);
+}
+
+.restore-button {
+  justify-self: start;
+  margin-top: 4px;
 }
 
 .drawer-backdrop {
@@ -1221,12 +1311,12 @@ video {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .archive-card {
-    grid-template-columns: 64px 1fr;
+  .archive-summary {
+    display: grid;
   }
 
-  .archive-card span {
-    grid-column: 2;
+  .archive-photo-strip {
+    aspect-ratio: 4 / 3;
   }
 
   .site-footer {
