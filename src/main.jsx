@@ -30,13 +30,14 @@ import {
   Wine,
   X,
 } from "lucide-react";
+import seedArchive from "./data/archive.json";
 import seedWines from "./data/wines.json";
 import "./styles.css";
 
 const BRAND_NAME = "Lynn Cave Privée";
 const PHOTO_BASE = "/photos/";
-const WINE_STORAGE_KEY = "lynn-cellar-wines";
-const ARCHIVE_STORAGE_KEY = "lynn-cellar-archive";
+const WINE_STORAGE_KEY = "lynn-cellar-wines-2026-05-02-inventory";
+const ARCHIVE_STORAGE_KEY = "lynn-cellar-archive-2026-05-02-inventory";
 const WISHLIST_STORAGE_KEY = "lynn-cellar-wishlist";
 const VENDOR_STORAGE_KEY = "lynn-cellar-vendors";
 const MAINTENANCE_STORAGE_KEY = "lynn-cellar-maintenance";
@@ -106,13 +107,17 @@ const regionSignals = [
   ["Oregon", "OR", "state"],
   ["Washington", "WA", "state"],
   ["Arizona", "AZ", "state"],
+  ["Maryland", "MD", "state"],
   ["New York", "NY", "state"],
   ["Bordeaux", "FR", "France"],
   ["Burgundy", "FR", "France"],
   ["Loire", "FR", "France"],
+  ["Rhône", "FR", "France"],
+  ["Châteauneuf", "FR", "France"],
   ["Piedmont", "IT", "Italy"],
   ["Tuscany", "IT", "Italy"],
   ["Veneto", "IT", "Italy"],
+  ["Rioja", "ES", "Spain"],
   ["Australia", "AU", "Australia"],
 ];
 
@@ -123,12 +128,15 @@ const regionPresets = [
   { label: "Santa Lucia Highlands, California", country: "United States", code: "CA" },
   { label: "Willamette Valley, Oregon", country: "United States", code: "OR" },
   { label: "Arizona", country: "United States", code: "AZ" },
+  { label: "St. Michaels, Maryland", country: "United States", code: "MD" },
   { label: "Bordeaux", country: "France", code: "FR" },
   { label: "Burgundy", country: "France", code: "FR" },
+  { label: "Châteauneuf-du-Pape, Rhône", country: "France", code: "FR" },
   { label: "Loire Valley", country: "France", code: "FR" },
   { label: "Piedmont", country: "Italy", code: "IT" },
   { label: "Tuscany", country: "Italy", code: "IT" },
   { label: "Veneto", country: "Italy", code: "IT" },
+  { label: "Rioja Alavesa", country: "Spain", code: "ES" },
   { label: "Western Australia", country: "Australia", code: "AU" },
 ];
 
@@ -276,7 +284,7 @@ function loadWines() {
 
 function loadArchive() {
   const saved = localStorage.getItem(ARCHIVE_STORAGE_KEY);
-  return saved ? JSON.parse(saved) : [];
+  return saved ? JSON.parse(saved) : seedArchive;
 }
 
 function loadStoredList(key, fallback) {
@@ -297,7 +305,7 @@ function saveStoredList(key, list) {
 }
 
 function zoneLabel(zone) {
-  return zone === "top" ? "Upper zone" : "Lower zone";
+  return zone === "top" ? "Zone A · Top" : "Zone B · Bottom";
 }
 
 function getSlotMeta(zone, slot) {
@@ -394,6 +402,7 @@ function buildWineOverview(wine) {
 }
 
 function buildVineyardNote(wine) {
+  if (wine.vineyardNotes) return wine.vineyardNotes;
   const region = wine.region || "its region";
   return `${wine.producer || "The producer"} works from ${region}${wine.country ? `, ${wine.country}` : ""}. Track producer notes, vineyard details, allocation history, and estate/vendor context here as the collection record grows.`;
 }
@@ -856,8 +865,8 @@ function Cellars({ wines, openWine }) {
             <span className="pill">{wines.filter((wine) => wine.cellar === cellar).length}/{CELLAR_CAPACITY} records placed</span>
           </div>
           <div className="cellar-layout">
-            <Zone title="Upper Whites" cellar={cellar} zone="top" wines={wines} openWine={openWine} />
-            <Zone title="Lower Reds" cellar={cellar} zone="bottom" wines={wines} openWine={openWine} />
+            <Zone title="Zone A · Whites / sparkling / sweet" cellar={cellar} zone="top" wines={wines} openWine={openWine} />
+            <Zone title="Zone B · Reds" cellar={cellar} zone="bottom" wines={wines} openWine={openWine} />
           </div>
         </section>
       ))}
@@ -869,7 +878,7 @@ function CellarRules() {
   const rules = [
     ["Left", "Under $50", "Every bottle below $50 is assigned to the left cellar."],
     ["Right", "$50 and above", "Every bottle at $50 or higher is assigned to the right cellar."],
-    ["Zones", "Whites top, reds bottom", "Sparkling, whites, rosé, and dessert wines use the upper zone. Reds use the lower zone."],
+    ["Zones", "A top, B bottom", "Whites, sparkling, rosé, and sweet whites use Zone A at the top. Reds use Zone B at the bottom."],
     ["Order", "Low to high price", "Within each zone, bottles are sorted from lowest price to highest price."],
     ["Preview", "Hover any slot", "Hover a filled slot to see the label, value, varietal, shelf, and position."],
   ];
@@ -888,14 +897,16 @@ function CellarRules() {
 
 function Zone({ title, cellar, zone, wines, openWine }) {
   const zoneWines = wines.filter((wine) => wine.cellar === cellar && wine.zone === zone);
-  const slots = Array.from({ length: ZONE_CAPACITY[zone] }, (_, index) => index + 1);
+  const slotCount = Math.max(ZONE_CAPACITY[zone], ...zoneWines.map((wine) => Number(wine.slot || 0)));
+  const slots = Array.from({ length: slotCount }, (_, index) => index + 1);
+  const overflowCount = Math.max(0, zoneWines.length - ZONE_CAPACITY[zone]);
 
   return (
     <div className="zone-card">
       <div className="zone-heading">
         <div>
           <h3>{title}</h3>
-          <p>{zoneLabel(zone)} · {zoneWines.length}/{ZONE_CAPACITY[zone]} bottles</p>
+          <p>{zoneLabel(zone)} · {zoneWines.length}/{ZONE_CAPACITY[zone]} bottles{overflowCount ? ` · ${overflowCount} overflow` : ""}</p>
         </div>
         <Thermometer size={18} />
       </div>
@@ -1414,6 +1425,7 @@ function WineDetail({ wine, back, onDrink, onUpdate }) {
       <div className="detail-grid">
         <DetailCard title="Bottle Info">
           <Spec label="Average price" value={money(averagePrice(wine))} />
+          {wine.priceEstimate && <Spec label="Workbook estimate" value={wine.priceEstimate} />}
           <Spec label="Quantity" value={wine.quantity} />
           <Spec label="Location" value={`Cellar ${wine.cellar}, ${zoneLabel(wine.zone)}, slot ${wine.slot}`} />
           <Spec label="Drink window" value={inferDrinkWindow(wine)} />
@@ -1597,6 +1609,7 @@ function ArchivePage({ archive }) {
               <span>{new Date(entry.consumedAt).toLocaleString()}</span>
               <h3>{wineTitle(entry.wine)}</h3>
               <p>{entry.wine.region} · {entry.wine.variety} · {money(averagePrice(entry.wine))}</p>
+              {entry.reason && <p>{entry.reason}</p>}
             </article>
           ))}
         </div>
