@@ -97,7 +97,7 @@
     "dateAdded": "2026-05-02",
     "cellar": 1,
     "zone": "bottom",
-    "slot": 10
+    "slot": 9
   },
   {
     "id": 4,
@@ -320,7 +320,7 @@
     "backPhoto": "IMG_7983.jpg",
     "cellar": 1,
     "zone": "bottom",
-    "slot": 9,
+    "slot": 8,
     "status": "Ready",
     "tastingNotes": {
       "appearance": "",
@@ -454,7 +454,7 @@
     "backPhoto": "IMG_7961.jpg",
     "cellar": 1,
     "zone": "bottom",
-    "slot": 11,
+    "slot": 10,
     "status": "Ready",
     "tastingNotes": {
       "appearance": "",
@@ -802,7 +802,7 @@
     "dateAdded": "2026-05-02",
     "cellar": 1,
     "zone": "bottom",
-    "slot": 15
+    "slot": 14
   },
   {
     "id": 25,
@@ -923,7 +923,7 @@
     "backPhoto": "IMG_8091.jpg",
     "cellar": 1,
     "zone": "bottom",
-    "slot": 13,
+    "slot": 12,
     "status": "Ready",
     "tastingNotes": {
       "appearance": "",
@@ -1039,40 +1039,6 @@
     "zone": "bottom",
     "slot": 18,
     "acquiredNotes": "Wine Sage invoice 11757, 2026-04-17: 6 bottles at $121.99 each, $731.94 line total before tax."
-  },
-  {
-    "id": 32,
-    "producer": "Monsanto",
-    "wineName": "Chianti Classico Riserva",
-    "vintage": 2021,
-    "region": "Chianti Classico, Tuscany",
-    "country": "Italy",
-    "variety": "Sangiovese",
-    "category": "Red",
-    "size": "750ml",
-    "quantity": 1,
-    "estimatedPrice": 37.5,
-    "sourceUrl": "https://www.wine.com/product/castello-di-monsanto-chianti-classico-riserva-2021/3538326",
-    "notes": "Added from front/back label photos. Back label barcode visible: 083960154094. | Imported from comprehensive workbook: $30-45",
-    "frontPhoto": "IMG_5403.jpg",
-    "backPhoto": "IMG_5404.jpg",
-    "cellar": 1,
-    "zone": "bottom",
-    "slot": 8,
-    "status": "Ready",
-    "tastingNotes": {
-      "appearance": "",
-      "nose": "",
-      "palate": "",
-      "finish": ""
-    },
-    "drinkWindow": "2025-2032",
-    "averagePrice": 37.5,
-    "priceEstimate": "$30-45",
-    "vineyardNotes": "Historic Chianti Classico producer. Riserva designation indicates extended aging. DOCG certification.",
-    "tags": [],
-    "criticRatings": [],
-    "dateAdded": "2026-05-02"
   },
   {
     "id": 33,
@@ -1362,7 +1328,7 @@
     "backPhoto": "IMG_7957.jpg",
     "cellar": 1,
     "zone": "bottom",
-    "slot": 12,
+    "slot": 11,
     "status": "Ready",
     "tastingNotes": {
       "appearance": "",
@@ -1396,7 +1362,7 @@
     "backPhoto": "IMG_7979.jpg",
     "cellar": 1,
     "zone": "bottom",
-    "slot": 16,
+    "slot": 15,
     "status": "Ready",
     "tastingNotes": {
       "appearance": "",
@@ -1633,7 +1599,7 @@
     "backPhoto": "IMG_8100.jpg",
     "cellar": 1,
     "zone": "bottom",
-    "slot": 14,
+    "slot": 13,
     "status": "Ready",
     "tastingNotes": {
       "appearance": "",

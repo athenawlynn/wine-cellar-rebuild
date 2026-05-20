@@ -1,5 +1,44 @@
 [
   {
+    "id": "consumed-monsanto-2026-05-20",
+    "consumedAt": "2026-05-20T20:58:11.196Z",
+    "reason": "Consumed one bottle of Monsanto Chianti Classico Riserva.",
+    "wine": {
+      "id": 32,
+      "producer": "Monsanto",
+      "wineName": "Chianti Classico Riserva",
+      "vintage": 2021,
+      "region": "Chianti Classico, Tuscany",
+      "country": "Italy",
+      "variety": "Sangiovese",
+      "category": "Red",
+      "size": "750ml",
+      "quantity": 1,
+      "estimatedPrice": 37.5,
+      "sourceUrl": "https://www.wine.com/product/castello-di-monsanto-chianti-classico-riserva-2021/3538326",
+      "notes": "Added from front/back label photos. Back label barcode visible: 083960154094. | Imported from comprehensive workbook: $30-45",
+      "frontPhoto": "IMG_5403.jpg",
+      "backPhoto": "IMG_5404.jpg",
+      "cellar": 1,
+      "zone": "bottom",
+      "slot": 8,
+      "status": "Consumed",
+      "tastingNotes": {
+        "appearance": "",
+        "nose": "",
+        "palate": "",
+        "finish": ""
+      },
+      "drinkWindow": "2025-2032",
+      "averagePrice": 37.5,
+      "priceEstimate": "$30-45",
+      "vineyardNotes": "Historic Chianti Classico producer. Riserva designation indicates extended aging. DOCG certification.",
+      "tags": [],
+      "criticRatings": [],
+      "dateAdded": "2026-05-02"
+    }
+  },
+  {
     "id": "excel-missing-1",
     "consumedAt": "2026-05-02T00:00:00.000Z",
     "reason": "Present in app but not in the comprehensive Excel inventory; treated as drunk/consumed.",
