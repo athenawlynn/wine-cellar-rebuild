@@ -731,7 +731,6 @@ function App() {
         <footer className="site-footer">
           <strong>{BRAND_NAME}</strong>
           <span>Private wine cellar planning, organization, and collection oversight.</span>
-          <a href="mailto:hello@lynncaveprivee.com">Inquire Privately</a>
         </footer>
       </main>
 
