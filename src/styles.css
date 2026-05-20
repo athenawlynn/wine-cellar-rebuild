@@ -701,7 +701,7 @@ p {
   display: grid;
   grid-template-columns: repeat(8, minmax(58px, 1fr));
   gap: 8px;
-  overflow-x: auto;
+  overflow: visible;
   padding-bottom: 2px;
 }
 
@@ -723,6 +723,11 @@ p {
   background:
     linear-gradient(180deg, rgba(233, 191, 127, 0.16), rgba(110, 23, 40, 0.12)),
     var(--panel-soft);
+}
+
+.slot:hover,
+.slot:focus {
+  z-index: 40;
 }
 
 .slot-number {
@@ -1441,6 +1446,7 @@ video {
 
   .slot-grid {
     grid-template-columns: repeat(8, minmax(56px, 1fr));
+    overflow-x: auto;
   }
 
   .rack-row {
@@ -1492,6 +1498,7 @@ video {
 
   .slot-grid {
     grid-template-columns: repeat(8, minmax(54px, 1fr));
+    overflow-x: auto;
   }
 
   .rack-label {
