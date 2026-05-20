@@ -23,6 +23,7 @@ import {
   Moon,
   Phone,
   Plus,
+  Printer,
   RotateCcw,
   Save,
   Search,
@@ -574,6 +575,137 @@ function regionPresetFor(label) {
   return regionPresets.find((item) => item.label === label);
 }
 
+function sortProducerVintage(a, b) {
+  return (
+    String(a.producer || "").localeCompare(String(b.producer || "")) ||
+    Number(b.vintage || 0) - Number(a.vintage || 0) ||
+    String(a.wineName || "").localeCompare(String(b.wineName || ""))
+  );
+}
+
+function sortRegionProducerVintage(a, b) {
+  return (
+    regionName(a).localeCompare(regionName(b)) ||
+    sortProducerVintage(a, b)
+  );
+}
+
+function groupByPrice(wines) {
+  const bands = [
+    ["Under $50", (price) => price < 50],
+    ["$50-$99", (price) => price >= 50 && price < 100],
+    ["$100-$199", (price) => price >= 100 && price < 200],
+    ["$200+", (price) => price >= 200],
+  ];
+  return bands.map(([title, test]) => ({
+    title,
+    wines: wines
+      .filter((wine) => test(averagePrice(wine)))
+      .sort((a, b) => averagePrice(b) - averagePrice(a) || Number(b.vintage || 0) - Number(a.vintage || 0) || String(a.producer || "").localeCompare(String(b.producer || ""))),
+  }));
+}
+
+function groupByType(wines) {
+  const order = ["Red", "White", "Sparkling", "Rosé", "Rose", "Dessert", "Other"];
+  return ["Red", "White", "Sparkling", "Rosé", "Dessert", "Other"].map((title) => ({
+    title,
+    wines: wines
+      .filter((wine) => {
+        const category = wine.category || "Other";
+        if (title === "Rosé") return category === "Rosé" || category === "Rose";
+        if (title === "Other") return !order.includes(category);
+        return category === title;
+      })
+      .sort(sortRegionProducerVintage),
+  }));
+}
+
+function groupByVintage(wines) {
+  const groups = wines.reduce((acc, wine) => {
+    const key = wine.vintage || "NV";
+    acc[key] = [...(acc[key] || []), wine];
+    return acc;
+  }, {});
+  return Object.entries(groups)
+    .sort(([a], [b]) => {
+      if (a === "NV") return 1;
+      if (b === "NV") return -1;
+      return Number(b) - Number(a);
+    })
+    .map(([title, items]) => ({
+      title,
+      wines: items.sort((a, b) => averagePrice(b) - averagePrice(a) || sortProducerVintage(a, b)),
+    }));
+}
+
+function groupByRegion(wines) {
+  const groups = wines.reduce((acc, wine) => {
+    const key = regionName(wine) || wine.region || "Region pending";
+    acc[key] = [...(acc[key] || []), wine];
+    return acc;
+  }, {});
+  return Object.entries(groups)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([title, items]) => ({
+      title,
+      wines: items.sort((a, b) => String(a.category || "").localeCompare(String(b.category || "")) || sortProducerVintage(a, b)),
+    }));
+}
+
+function tastingNotesList(wines) {
+  return [...wines].sort((a, b) => (
+    String(a.category || "").localeCompare(String(b.category || "")) ||
+    regionName(a).localeCompare(regionName(b)) ||
+    sortProducerVintage(a, b)
+  ));
+}
+
+function getCellarBookStats(wines) {
+  const bottles = wines.reduce((sum, wine) => sum + Number(wine.quantity || 0), 0);
+  const value = wines.reduce((sum, wine) => sum + averagePrice(wine) * Number(wine.quantity || 0), 0);
+  const regions = Array.from(new Set(wines.map((wine) => regionName(wine)).filter(Boolean)));
+  const typeCounts = wines.reduce((acc, wine) => {
+    const type = wine.category || "Other";
+    acc[type] = (acc[type] || 0) + Number(wine.quantity || 0);
+    return acc;
+  }, {});
+  const cellarSplit = wines.reduce((acc, wine) => {
+    const key = wine.cellar === 1 ? "Left Cellar" : "Right Cellar";
+    acc[key] = (acc[key] || 0) + Number(wine.quantity || 0);
+    return acc;
+  }, {});
+  const topRegions = Object.entries(wines.reduce((acc, wine) => {
+    const key = regionName(wine);
+    acc[key] = (acc[key] || 0) + Number(wine.quantity || 0);
+    return acc;
+  }, {}))
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 6);
+  const drinkStatus = wines.reduce((acc, wine) => {
+    const status = drinkWindowStatus(wine);
+    acc[status] = (acc[status] || 0) + Number(wine.quantity || 0);
+    return acc;
+  }, {});
+  return {
+    records: wines.length,
+    bottles,
+    value,
+    averageBottleValue: bottles ? value / bottles : 0,
+    redCount: typeCounts.Red || 0,
+    whiteCount: typeCounts.White || 0,
+    regions: regions.length,
+    typeCounts,
+    cellarSplit,
+    topRegions,
+    drinkStatus,
+    priceBands: groupByPrice(wines).map((group) => ({
+      title: group.title,
+      bottles: group.wines.reduce((sum, wine) => sum + Number(wine.quantity || 0), 0),
+      value: group.wines.reduce((sum, wine) => sum + averagePrice(wine) * Number(wine.quantity || 0), 0),
+    })),
+  };
+}
+
 function App() {
   const [wines, setWines] = useState(loadWines);
   const [archive, setArchive] = useState(loadArchive);
@@ -773,6 +905,7 @@ function App() {
           <NavButton icon={<Grape />} active={view === "collection"} onClick={() => setView("collection")}>Wines</NavButton>
           <NavButton icon={<Sparkles />} active={view === "tools"} onClick={() => setView("tools")}>Tools</NavButton>
           <NavButton icon={<ClipboardList />} active={view === "specs"} onClick={() => setView("specs")}>Specs</NavButton>
+          <NavButton icon={<Printer />} active={view === "print"} onClick={() => setView("print")}>Cellar Book</NavButton>
           <NavButton icon={<History />} active={view === "archive"} onClick={() => setView("archive")}>Archive</NavButton>
         </nav>
       </aside>
@@ -830,6 +963,7 @@ function App() {
           />
         )}
         {view === "specs" && <SpecsPage />}
+        {view === "print" && <PrintableCellarBook wines={wines} />}
         {view === "archive" && <ArchivePage archive={archive} onRestore={restoreArchivedWine} />}
         {view === "detail" && activeWine && (
           <WineDetail
@@ -860,6 +994,7 @@ function topbarTitle(view) {
   if (view === "tools") return "Cellar Tools";
   if (view === "detail") return "Bottle Details";
   if (view === "specs") return "Cellar Specs";
+  if (view === "print") return "Cellar Book";
   if (view === "archive") return "Drink Archive";
   return "Wine Collection";
 }
