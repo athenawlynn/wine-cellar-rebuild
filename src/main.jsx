@@ -262,7 +262,26 @@ function averagePrice(wine) {
   return Number(wine.averagePrice ?? wine.estimatedPrice ?? 0);
 }
 
+function placementPriority(wine) {
+  const priority = Number(wine.placementPriority);
+  return Number.isFinite(priority) ? priority : null;
+}
+
 function placementSort(a, b) {
+  const aPriority = placementPriority(a);
+  const bPriority = placementPriority(b);
+
+  if (aPriority !== null || bPriority !== null) {
+    return (
+      (aPriority ?? -Infinity) - (bPriority ?? -Infinity) ||
+      averagePrice(a) - averagePrice(b) ||
+      String(a.producer || "").localeCompare(String(b.producer || "")) ||
+      String(a.wineName || "").localeCompare(String(b.wineName || "")) ||
+      Number(a.vintage || 0) - Number(b.vintage || 0) ||
+      Number(a.id || 0) - Number(b.id || 0)
+    );
+  }
+
   return (
     averagePrice(a) - averagePrice(b) ||
     String(a.producer || "").localeCompare(String(b.producer || "")) ||

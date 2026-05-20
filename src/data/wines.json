@@ -577,7 +577,8 @@
     "vineyardNotes": "Premium Napa Valley proprietary blend from Tim Mondavi. Cellared and bottled by Continuum Partners.",
     "tags": [],
     "criticRatings": [],
-    "dateAdded": "2026-05-02"
+    "dateAdded": "2026-05-02",
+    "placementPriority": 100
   },
   {
     "id": 18,
@@ -1180,7 +1181,8 @@
     "dateAdded": "2026-05-02",
     "cellar": 2,
     "zone": "fullRed",
-    "slot": 21
+    "slot": 22,
+    "placementPriority": 102
   },
   {
     "id": 37,
@@ -1213,7 +1215,8 @@
     "dateAdded": "2026-05-02",
     "cellar": 2,
     "zone": "fullRed",
-    "slot": 22
+    "slot": 23,
+    "placementPriority": 103
   },
   {
     "id": 38,
@@ -1696,5 +1699,48 @@
     "cellar": 1,
     "zone": "bottom",
     "slot": 9
+  },
+  {
+    "id": 52,
+    "producer": "Caymus Vineyards",
+    "wineName": "Napa Valley Cabernet Sauvignon",
+    "vintage": 2021,
+    "region": "Napa Valley, California",
+    "appellation": "Napa Valley",
+    "country": "United States",
+    "variety": "Cabernet Sauvignon",
+    "category": "Red",
+    "size": "750ml",
+    "quantity": 1,
+    "alcohol": "13.9%",
+    "estimatedPrice": 95,
+    "averagePrice": 95,
+    "priceEstimate": "$90-$100",
+    "sourceUrl": "",
+    "notes": "Rich, ripe, polished Napa Cabernet. Tasting notes: dark fruit, ripe tannins, cocoa, cassis, ripe berries. Food pairing: steak, prime rib, lamb, rich sauces.",
+    "frontPhoto": "IMG_5829.jpg",
+    "backPhoto": "IMG_5830.jpg",
+    "cellar": 2,
+    "zone": "fullRed",
+    "slot": 21,
+    "status": "Drink now / short-term hold",
+    "tastingNotes": {
+      "appearance": "",
+      "nose": "Dark fruit, cassis, ripe berries, cocoa",
+      "palate": "Rich, ripe, polished Napa Cabernet with ripe tannins",
+      "finish": "Smooth, plush, and structured"
+    },
+    "drinkWindow": "2026-2031",
+    "vineyardNotes": "Caymus Napa Valley Cabernet Sauvignon from Wagner Family wines.",
+    "foodPairing": "Steak, prime rib, lamb, rich sauces",
+    "tags": [
+      "Napa",
+      "Cabernet",
+      "Caymus",
+      "Wagner Family"
+    ],
+    "criticRatings": [],
+    "placementPriority": 101,
+    "dateAdded": "2026-05-20"
   }
 ]
