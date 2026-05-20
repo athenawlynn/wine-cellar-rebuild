@@ -641,8 +641,10 @@ p {
 
 .slot-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(58px, 1fr));
+  grid-template-columns: repeat(8, minmax(58px, 1fr));
   gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
 }
 
 .slot {
@@ -714,6 +716,32 @@ p {
   height: 92px;
   object-fit: cover;
   border-radius: 6px;
+}
+
+.overflow-list {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.overflow-list span {
+  color: var(--faint);
+  font-size: 0.74rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.overflow-list button {
+  min-height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-soft);
+  color: var(--text);
+  padding: 0 10px;
 }
 
 .spec-grid {
@@ -1308,7 +1336,7 @@ video {
   }
 
   .slot-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(8, minmax(56px, 1fr));
   }
 
   .archive-summary {
@@ -1355,7 +1383,7 @@ video {
   }
 
   .slot-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(8, minmax(54px, 1fr));
   }
 
   .wine-row {

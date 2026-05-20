@@ -58,21 +58,21 @@ const CELLAR_MODEL = {
 
 const COOLER_LAYOUT = {
   top: [
-    { shelf: 1, capacity: 9 },
-    { shelf: 2, capacity: 9 },
-    { shelf: 3, capacity: 9 },
+    { rack: 1, capacity: 8 },
+    { rack: 2, capacity: 8 },
+    { rack: 3, capacity: 8 },
   ],
   bottom: [
-    { shelf: 4, capacity: 9 },
-    { shelf: 5, capacity: 9 },
-    { shelf: 6, capacity: 6, label: "Bottom shelf" },
+    { rack: 1, capacity: 8 },
+    { rack: 2, capacity: 8 },
+    { rack: 3, capacity: 8 },
   ],
 };
 
-const CELLAR_CAPACITY = [...COOLER_LAYOUT.top, ...COOLER_LAYOUT.bottom].reduce((sum, shelf) => sum + shelf.capacity, 0);
+const CELLAR_CAPACITY = [...COOLER_LAYOUT.top, ...COOLER_LAYOUT.bottom].reduce((sum, rack) => sum + rack.capacity, 0);
 const ZONE_CAPACITY = {
-  top: COOLER_LAYOUT.top.reduce((sum, shelf) => sum + shelf.capacity, 0),
-  bottom: COOLER_LAYOUT.bottom.reduce((sum, shelf) => sum + shelf.capacity, 0),
+  top: COOLER_LAYOUT.top.reduce((sum, rack) => sum + rack.capacity, 0),
+  bottom: COOLER_LAYOUT.bottom.reduce((sum, rack) => sum + rack.capacity, 0),
 };
 const TOP_ZONE_CATEGORIES = ["White", "Sparkling", "Dessert", "Rose", "Rosé", "Rosé"];
 
@@ -153,13 +153,13 @@ const defaultVendors = [
 ];
 
 const defaultMaintenance = [
-  { id: 1, task: "Verify upper and lower zone temperatures", cadence: "Weekly", status: "Due", note: `${CELLAR_MODEL.upperRange} upper, ${CELLAR_MODEL.lowerRange} lower.` },
+  { id: 1, task: "Verify white and red rack temperatures", cadence: "Weekly", status: "Due", note: `${CELLAR_MODEL.upperRange} white racks, ${CELLAR_MODEL.lowerRange} red racks.` },
   { id: 2, task: "Clean vents and inspect door seals", cadence: "Monthly", status: "Scheduled", note: "Check both Allavino units." },
-  { id: 3, task: "Review shelf placement after new buys", cadence: "As needed", status: "Active", note: "Keep price sort and top/bottom zone rules intact." },
+  { id: 3, task: "Review rack placement after new buys", cadence: "As needed", status: "Active", note: "Keep price sort and white/red rack rules intact." },
 ];
 
 const defaultEvents = [
-  { id: 1, name: "Steak dinner candidates", date: "Next dinner", pairing: "Cabernet / Bordeaux", note: "Pull structured reds from the right lower zone." },
+  { id: 1, name: "Steak dinner candidates", date: "Next dinner", pairing: "Cabernet / Bordeaux", note: "Pull structured reds from the right red racks." },
   { id: 2, name: "Seafood or patio whites", date: "Warm-weather hosting", pairing: "Sancerre / Chardonnay", note: "Use upper-zone whites with earlier drink windows." },
 ];
 
@@ -328,18 +328,26 @@ function saveStoredList(key, list) {
 }
 
 function zoneLabel(zone) {
-  return zone === "top" ? "Zone A · Top" : "Zone B · Bottom";
+  return zone === "top" ? "White racks" : "Red racks";
 }
 
 function getSlotMeta(zone, slot) {
   let remaining = slot;
-  for (const shelf of COOLER_LAYOUT[zone]) {
-    if (remaining <= shelf.capacity) {
-      return { shelf: shelf.shelf, position: remaining, capacity: shelf.capacity, label: shelf.label || `Shelf ${shelf.shelf}` };
+  const prefix = zone === "top" ? "W" : "R";
+  const rackType = zone === "top" ? "White" : "Red";
+  for (const rack of COOLER_LAYOUT[zone]) {
+    if (remaining <= rack.capacity) {
+      return {
+        rack: rack.rack,
+        position: remaining,
+        capacity: rack.capacity,
+        label: `${rackType} Rack ${rack.rack}`,
+        shortLabel: `${prefix}${rack.rack}-${remaining}`,
+      };
     }
-    remaining -= shelf.capacity;
+    remaining -= rack.capacity;
   }
-  return { shelf: null, position: slot, capacity: ZONE_CAPACITY[zone], label: "Overflow" };
+  return { rack: null, position: slot, capacity: ZONE_CAPACITY[zone], label: "Overflow", shortLabel: `${prefix}+${slot}` };
 }
 
 function suggestPlacement(wines, draft) {
@@ -805,8 +813,8 @@ function Dashboard({ stats, wines, openWine, setView, openTool }) {
 
       <Section title="Cellar Split" icon={<ClipboardList size={18} />}>
         <div className="cellar-summary-grid">
-          <Metric label="Left Cellar Under $50" value={stats.cellar1} note={`${stats.cellar1Bottles} bottles by quantity`} />
-          <Metric label="Right Cellar $50+" value={stats.cellar2} note={`${stats.cellar2Bottles} bottles by quantity`} />
+          <Metric label="Left Cellar" value={stats.cellar1} note={`Under $50 · ${stats.cellar1Bottles} bottles`} />
+          <Metric label="Right Cellar" value={stats.cellar2} note={`$50+ · ${stats.cellar2Bottles} bottles`} />
         </div>
       </Section>
     </div>
@@ -907,7 +915,7 @@ function BottleList({ wines, openWine, compact = false }) {
       {wines.map((wine) => (
         <button key={wine.id} onClick={() => openWine(wine.id)}>
           <span>{wineTitle(wine)}</span>
-          <small>{wine.category} · {money(averagePrice(wine))} · C{wine.cellar} {zoneLabel(wine.zone)} #{wine.slot}</small>
+          <small>{wine.category} · {money(averagePrice(wine))} · {wine.cellar === 1 ? "Left" : "Right"} · {getSlotMeta(wine.zone, wine.slot).shortLabel}</small>
         </button>
       ))}
     </div>
@@ -933,13 +941,13 @@ function Cellars({ wines, openWine }) {
           <div className="cellar-header">
             <div>
               <p className="eyebrow">Cellar {cellar}</p>
-              <h2>{cellar === 1 ? "Left Cellar · Under $50" : "Right Cellar · $50 and Above"}</h2>
+              <h2>{cellar === 1 ? "Left Cellar" : "Right Cellar"}</h2>
             </div>
             <span className="pill">{wines.filter((wine) => wine.cellar === cellar).length}/{CELLAR_CAPACITY} records placed</span>
           </div>
           <div className="cellar-layout">
-            <Zone title="Zone A · Whites / sparkling / sweet" cellar={cellar} zone="top" wines={wines} openWine={openWine} />
-            <Zone title="Zone B · Reds" cellar={cellar} zone="bottom" wines={wines} openWine={openWine} />
+            <Zone title="White Racks" cellar={cellar} zone="top" wines={wines} openWine={openWine} />
+            <Zone title="Red Racks" cellar={cellar} zone="bottom" wines={wines} openWine={openWine} />
           </div>
         </section>
       ))}
@@ -951,9 +959,10 @@ function CellarRules() {
   const rules = [
     ["Left", "Under $50", "Every bottle below $50 is assigned to the left cellar."],
     ["Right", "$50 and above", "Every bottle at $50 or higher is assigned to the right cellar."],
-    ["Zones", "A top, B bottom", "Whites, sparkling, rosé, and sweet whites use Zone A at the top. Reds use Zone B at the bottom."],
+    ["Rows", "3 white, 3 red", "Each cellar shows three white racks on top and three red racks underneath."],
+    ["Slots", "8 per rack", "Each rack row has eight bottle positions from left to right."],
     ["Order", "Low to high price", "Within each zone, bottles are sorted from lowest price to highest price."],
-    ["Preview", "Hover any slot", "Hover a filled slot to see the label, value, varietal, shelf, and position."],
+    ["Preview", "Hover any slot", "Hover a filled slot to see the label, value, varietal, rack, and position."],
   ];
   return (
     <section className="rule-band">
@@ -970,8 +979,8 @@ function CellarRules() {
 
 function Zone({ title, cellar, zone, wines, openWine }) {
   const zoneWines = wines.filter((wine) => wine.cellar === cellar && wine.zone === zone);
-  const slotCount = Math.max(ZONE_CAPACITY[zone], ...zoneWines.map((wine) => Number(wine.slot || 0)));
-  const slots = Array.from({ length: slotCount }, (_, index) => index + 1);
+  const slots = Array.from({ length: ZONE_CAPACITY[zone] }, (_, index) => index + 1);
+  const overflowWines = zoneWines.filter((wine) => Number(wine.slot || 0) > ZONE_CAPACITY[zone]);
   const overflowCount = Math.max(0, zoneWines.length - ZONE_CAPACITY[zone]);
 
   return (
@@ -979,7 +988,7 @@ function Zone({ title, cellar, zone, wines, openWine }) {
       <div className="zone-heading">
         <div>
           <h3>{title}</h3>
-          <p>{zoneLabel(zone)} · {zoneWines.length}/{ZONE_CAPACITY[zone]} bottles{overflowCount ? ` · ${overflowCount} overflow` : ""}</p>
+          <p>3 racks · 8 slots each · {zoneWines.length}/{ZONE_CAPACITY[zone]} bottles{overflowCount ? ` · ${overflowCount} overflow` : ""}</p>
         </div>
         <Thermometer size={18} />
       </div>
@@ -994,20 +1003,30 @@ function Zone({ title, cellar, zone, wines, openWine }) {
               onClick={() => wine && openWine(wine.id)}
               title={wine ? wineTitle(wine) : "Empty slot"}
             >
-              <span className="slot-number">{meta.shelf}.{meta.position}</span>
+              <span className="slot-number">{meta.shortLabel}</span>
               {wine ? <span className="slot-name">{wine.producer}</span> : <span className="slot-empty">Empty</span>}
               {wine && (
                 <span className="slot-hover">
                   {wine.frontPhoto && <img src={photoUrl(wine.frontPhoto)} alt={`${wineTitle(wine)} bottle`} />}
                   <strong>{wineTitle(wine)}</strong>
                   <small>{wine.variety} · {money(averagePrice(wine))}</small>
-                  <small>C{wine.cellar} · {meta.label}, position {meta.position}</small>
+                  <small>{cellar === 1 ? "Left" : "Right"} · {meta.label} · Slot {meta.position}</small>
                 </span>
               )}
             </button>
           );
         })}
       </div>
+      {overflowWines.length > 0 && (
+        <div className="overflow-list">
+          <span>Overflow</span>
+          {overflowWines.map((wine) => (
+            <button key={wine.id} onClick={() => openWine(wine.id)}>
+              {wineTitle(wine)}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -1453,7 +1472,7 @@ function Collection({ wines, filters, setFilters, openWine }) {
               <span>{wine.region}</span>
               <span>{money(averagePrice(wine))}</span>
               <span>Qty {wine.quantity}</span>
-              <span>C{wine.cellar} · {wine.zone} · {wine.slot}</span>
+              <span>{wine.cellar === 1 ? "Left" : "Right"} · {getSlotMeta(wine.zone, wine.slot).shortLabel}</span>
             </button>
           ))}
         </div>
@@ -1532,7 +1551,7 @@ function WineDetail({ wine, back, onDrink, onUpdate, onNavigate, sequence = [] }
           <Spec label="Average price" value={money(averagePrice(wine))} />
           {wine.priceEstimate && <Spec label="Workbook estimate" value={wine.priceEstimate} />}
           <Spec label="Quantity" value={wine.quantity} />
-          <Spec label="Location" value={`Cellar ${wine.cellar}, ${zoneLabel(wine.zone)}, slot ${wine.slot}`} />
+          <Spec label="Location" value={`${wine.cellar === 1 ? "Left Cellar" : "Right Cellar"}, ${getSlotMeta(wine.zone, wine.slot).label}, slot ${getSlotMeta(wine.zone, wine.slot).position}`} />
           <Spec label="Drink window" value={inferDrinkWindow(wine)} />
         </DetailCard>
         <DetailCard title="About the Vineyard">
@@ -1831,8 +1850,8 @@ function ScanDrawer({ wines, onClose, onSave }) {
           <label className="wide drawer-note">How Acquired<textarea value={draft.acquiredNotes} onChange={(event) => setDraft((current) => ({ ...current, acquiredNotes: event.target.value }))} /></label>
           <div className="placement-preview">
             <span>Suggested placement</span>
-            <strong>Cellar {placement.cellar} · {zoneLabel(placement.zone)} · Slot {placement.slot}</strong>
-            <small>{averagePrice(placement) < 50 ? "Under $50 left cellar" : "$50+ right cellar"}</small>
+            <strong>{placement.cellar === 1 ? "Left Cellar" : "Right Cellar"} · {getSlotMeta(placement.zone, placement.slot).shortLabel}</strong>
+            <small>{averagePrice(placement) < 50 ? "Under $50" : "$50+"}</small>
           </div>
           <button className="save-button" type="submit" disabled={saving}>
             <Save size={18} />
