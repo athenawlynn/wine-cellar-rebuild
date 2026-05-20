@@ -11,6 +11,8 @@ import {
   CheckCircle2,
   ClipboardList,
   Edit3,
+  Eye,
+  EyeOff,
   Fan,
   Filter,
   Grape,
@@ -956,9 +958,22 @@ function EmptyState({ title, body }) {
 }
 
 function Cellars({ wines, openWine }) {
+  const [showRackPrices, setShowRackPrices] = useState(true);
+
   return (
     <div className="cellars-page">
-      <CellarRules />
+      <div className="cellar-view-header">
+        <CellarRules />
+        <button
+          className="ghost-button price-toggle"
+          type="button"
+          onClick={() => setShowRackPrices((current) => !current)}
+          aria-pressed={showRackPrices}
+        >
+          {showRackPrices ? <EyeOff size={17} /> : <Eye size={17} />}
+          {showRackPrices ? "Hide Prices" : "Show Prices"}
+        </button>
+      </div>
       {[1, 2].map((cellar) => (
         <section className="cellar-shell" key={cellar}>
           <div className="cellar-header">
@@ -969,8 +984,8 @@ function Cellars({ wines, openWine }) {
             <span className="pill">{wines.filter((wine) => wine.cellar === cellar).reduce((sum, wine) => sum + Number(wine.quantity || 0), 0)}/{CELLAR_CAPACITY} bottle slots filled</span>
           </div>
           <div className="cellar-layout">
-            <Zone title="White Racks" cellar={cellar} zone="top" wines={wines} openWine={openWine} />
-            <Zone title="Red Racks" cellar={cellar} zone="bottom" wines={wines} openWine={openWine} />
+            <Zone title="White Racks" cellar={cellar} zone="top" wines={wines} openWine={openWine} showPrices={showRackPrices} />
+            <Zone title="Red Racks" cellar={cellar} zone="bottom" wines={wines} openWine={openWine} showPrices={showRackPrices} />
           </div>
         </section>
       ))}
@@ -1000,7 +1015,7 @@ function CellarRules() {
   );
 }
 
-function Zone({ title, cellar, zone, wines, openWine }) {
+function Zone({ title, cellar, zone, wines, openWine, showPrices }) {
   const zoneWines = wines.filter((wine) => wine.cellar === cellar && wine.zone === zone);
   const bottleSlots = bottleSlotsForWines(zoneWines);
   const rackType = zone === "top" ? "White" : "Red";
@@ -1053,7 +1068,7 @@ function Zone({ title, cellar, zone, wines, openWine }) {
                       {wine ? (
                         <>
                           <span className="slot-name">{wine.producer}</span>
-                          <span className="slot-price">{money(averagePrice(wine))}</span>
+                          {showPrices && <span className="slot-price">{money(averagePrice(wine))}</span>}
                         </>
                       ) : <span className="slot-empty">Empty</span>}
                       {wine && (
