@@ -1157,7 +1157,10 @@ function Zone({ title, cellar, zone, wines, openWine, showPrices, searchQuery = 
                       onClick={() => wine && openWine(wine.id)}
                       title={wine ? wineTitle(wine) : "Empty slot"}
                     >
-                      <span className="slot-number">{meta.position}</span>
+                      <span className="slot-kicker">
+                        <span className="slot-number">{meta.position}</span>
+                        {wine && <span className="slot-vintage">{wine.vintage || "NV"}</span>}
+                      </span>
                       {wine ? (
                         <>
                           <span className="slot-name">{wine.producer}</span>

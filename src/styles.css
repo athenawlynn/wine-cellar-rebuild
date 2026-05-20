@@ -783,7 +783,7 @@ p {
   display: grid;
   align-content: center;
   gap: 5px;
-  min-height: 68px;
+  min-height: 76px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: rgba(255, 248, 239, 0.045);
@@ -813,9 +813,23 @@ p {
   opacity: 1;
 }
 
-.slot-number {
+.slot-kicker {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.slot-number,
+.slot-vintage {
   color: var(--gold);
   font-size: 0.76rem;
+}
+
+.slot-vintage {
+  flex: 0 0 auto;
+  font-weight: 800;
 }
 
 .slot-name,
