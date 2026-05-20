@@ -43,14 +43,14 @@
     "category": "Red",
     "size": "750ml",
     "quantity": 1,
-    "estimatedPrice": 150,
+    "estimatedPrice": 180,
     "sourceUrl": "https://www.bvwines.com/products/2021-georges-de-latour-private-reserve-cabernet-sauvignon",
     "notes": "Vintage visible in photo. | Imported from comprehensive workbook: $120-180",
     "frontPhoto": "IMG_8106.jpg",
     "backPhoto": "IMG_8107.jpg",
     "cellar": 2,
-    "zone": "bottom",
-    "slot": 20,
+    "zone": "fullRed",
+    "slot": 19,
     "status": "Ready",
     "tastingNotes": {
       "appearance": "",
@@ -59,8 +59,8 @@
       "finish": ""
     },
     "drinkWindow": null,
-    "averagePrice": 150,
-    "priceEstimate": "$120-180",
+    "averagePrice": 180,
+    "priceEstimate": "$180",
     "vineyardNotes": "A Founder's Wine since 1900. Created by legendary winemaker André Tchelistcheff starting with 1936 vintage. Aged in French oak. Standard bearer of fine Rutherford Cabernet.",
     "tags": [],
     "criticRatings": [],
@@ -97,7 +97,7 @@
     "dateAdded": "2026-05-02",
     "cellar": 1,
     "zone": "bottom",
-    "slot": 9
+    "slot": 11
   },
   {
     "id": 4,
@@ -110,14 +110,14 @@
     "category": "Red",
     "size": "750ml",
     "quantity": 1,
-    "estimatedPrice": 110,
+    "estimatedPrice": 34.99,
     "sourceUrl": "https://wineanthology.com/25504-campo-alle-noci-brunello-di-montalcino-2018",
     "notes": "Vintage visible in photo. | Imported from comprehensive workbook: $90-130",
     "frontPhoto": "IMG_7958.jpg",
     "backPhoto": "IMG_7959.jpg",
-    "cellar": 2,
+    "cellar": 1,
     "zone": "bottom",
-    "slot": 17,
+    "slot": 8,
     "status": "Ready",
     "tastingNotes": {
       "appearance": "",
@@ -126,8 +126,8 @@
       "finish": ""
     },
     "drinkWindow": null,
-    "averagePrice": 110,
-    "priceEstimate": "$90-130",
+    "averagePrice": 34.99,
+    "priceEstimate": "$34.99",
     "vineyardNotes": "Estate bottled. DOCG certification.",
     "tags": [],
     "criticRatings": [],
@@ -218,7 +218,7 @@
     "frontPhoto": "IMG_7972.jpg",
     "backPhoto": "IMG_7973.jpg",
     "cellar": 2,
-    "zone": "bottom",
+    "zone": "fullRed",
     "slot": 4,
     "status": "Hold",
     "tastingNotes": {
@@ -299,7 +299,7 @@
     "criticRatings": [],
     "dateAdded": "2026-05-02",
     "cellar": 2,
-    "zone": "bottom",
+    "zone": "fullRed",
     "slot": 15
   },
   {
@@ -320,7 +320,7 @@
     "backPhoto": "IMG_7983.jpg",
     "cellar": 1,
     "zone": "bottom",
-    "slot": 8,
+    "slot": 9,
     "status": "Ready",
     "tastingNotes": {
       "appearance": "",
@@ -352,9 +352,9 @@
     "notes": "Vintage visible in photo. | Imported from comprehensive workbook: $60-90",
     "frontPhoto": "IMG_8092.jpg",
     "backPhoto": "IMG_8094.jpg",
-    "cellar": 2,
+    "cellar": 1,
     "zone": "top",
-    "slot": 2,
+    "slot": 10,
     "status": "Ready",
     "tastingNotes": {
       "appearance": "",
@@ -400,7 +400,7 @@
     "criticRatings": [],
     "dateAdded": "2026-05-02",
     "cellar": 2,
-    "zone": "bottom",
+    "zone": "fullRed",
     "slot": 2
   },
   {
@@ -454,7 +454,7 @@
     "backPhoto": "IMG_7961.jpg",
     "cellar": 1,
     "zone": "bottom",
-    "slot": 10,
+    "slot": 12,
     "status": "Ready",
     "tastingNotes": {
       "appearance": "",
@@ -481,13 +481,13 @@
     "category": "Red",
     "size": "750ml",
     "quantity": 1,
-    "estimatedPrice": 55,
+    "estimatedPrice": 55.99,
     "sourceUrl": "https://www.wine.com/product/chateau-de-pez-2022/2552417",
     "notes": "Vintage visible in photo. | Imported from comprehensive workbook: $40-70",
     "frontPhoto": "IMG_7952.jpg",
     "backPhoto": "IMG_7953.jpg",
     "cellar": 2,
-    "zone": "bottom",
+    "zone": "fullRed",
     "slot": 1,
     "status": "Ready",
     "tastingNotes": {
@@ -497,8 +497,8 @@
       "finish": ""
     },
     "drinkWindow": null,
-    "averagePrice": 55,
-    "priceEstimate": "$40-70",
+    "averagePrice": 55.99,
+    "priceEstimate": "$55.99",
     "vineyardNotes": "Saint-Estèphe appellation. Traditional Bordeaux estate from the Left Bank.",
     "tags": [],
     "criticRatings": [],
@@ -555,8 +555,8 @@
     "frontPhoto": "IMG_8111.jpg",
     "backPhoto": "IMG_8112.jpg",
     "cellar": 2,
-    "zone": "bottom",
-    "slot": 21,
+    "zone": "fullRed",
+    "slot": 20,
     "status": "Ready",
     "tastingNotes": {
       "appearance": "",
@@ -668,7 +668,7 @@
     "criticRatings": [],
     "dateAdded": "2026-05-02",
     "cellar": 2,
-    "zone": "bottom",
+    "zone": "fullRed",
     "slot": 3
   },
   {
@@ -688,7 +688,7 @@
     "frontPhoto": "IMG_8088.jpg",
     "backPhoto": "IMG_8089.jpg",
     "cellar": 2,
-    "zone": "bottom",
+    "zone": "fullRed",
     "slot": 11,
     "status": "Ready",
     "tastingNotes": {
@@ -735,7 +735,7 @@
     "criticRatings": [],
     "dateAdded": "2026-05-02",
     "cellar": 2,
-    "zone": "bottom",
+    "zone": "fullRed",
     "slot": 7
   },
   {
@@ -768,7 +768,7 @@
     "criticRatings": [],
     "dateAdded": "2026-05-02",
     "cellar": 2,
-    "zone": "bottom",
+    "zone": "fullRed",
     "slot": 8
   },
   {
@@ -802,7 +802,7 @@
     "dateAdded": "2026-05-02",
     "cellar": 1,
     "zone": "bottom",
-    "slot": 14
+    "slot": 15
   },
   {
     "id": 25,
@@ -821,7 +821,7 @@
     "frontPhoto": "IMG_8103.jpg",
     "backPhoto": null,
     "cellar": 2,
-    "zone": "bottom",
+    "zone": "fullRed",
     "slot": 9,
     "status": "Ready",
     "tastingNotes": {
@@ -868,7 +868,7 @@
     "criticRatings": [],
     "dateAdded": "2026-05-02",
     "cellar": 2,
-    "zone": "bottom",
+    "zone": "fullRed",
     "slot": 12
   },
   {
@@ -888,8 +888,8 @@
     "frontPhoto": "IMG_8113.jpg",
     "backPhoto": "IMG_8114.jpg",
     "cellar": 2,
-    "zone": "bottom",
-    "slot": 19,
+    "zone": "fullRed",
+    "slot": 17,
     "status": "Ready",
     "tastingNotes": {
       "appearance": "",
@@ -916,14 +916,14 @@
     "category": "Red",
     "size": "750ml",
     "quantity": 1,
-    "estimatedPrice": 42.5,
+    "estimatedPrice": 40.99,
     "sourceUrl": "https://www.totalwine.com/wine/red-wine/sangiovese/le-potazzine-rosso-di-montalcino/p/235607750",
     "notes": "Vintage visible in photo. | Imported from comprehensive workbook: $35-50",
     "frontPhoto": "IMG_8090.jpg",
     "backPhoto": "IMG_8091.jpg",
     "cellar": 1,
     "zone": "bottom",
-    "slot": 12,
+    "slot": 14,
     "status": "Ready",
     "tastingNotes": {
       "appearance": "",
@@ -932,8 +932,8 @@
       "finish": ""
     },
     "drinkWindow": null,
-    "averagePrice": 42.5,
-    "priceEstimate": "$35-50",
+    "averagePrice": 40.99,
+    "priceEstimate": "$40.99",
     "vineyardNotes": "Estate bottled by Tenuta Le Potazzine Montalcino. Family estate focused on tradition and terroir.",
     "tags": [],
     "criticRatings": [],
@@ -1003,7 +1003,7 @@
     "criticRatings": [],
     "dateAdded": "2026-05-02",
     "cellar": 2,
-    "zone": "bottom",
+    "zone": "fullRed",
     "slot": 6
   },
   {
@@ -1036,8 +1036,8 @@
     "criticRatings": [],
     "dateAdded": "2026-05-02",
     "cellar": 2,
-    "zone": "bottom",
-    "slot": 18,
+    "zone": "fullRed",
+    "slot": 16,
     "acquiredNotes": "Wine Sage invoice 11757, 2026-04-17: 6 bottles at $121.99 each, $731.94 line total before tax."
   },
   {
@@ -1051,14 +1051,14 @@
     "category": "White",
     "size": "750ml",
     "quantity": 1,
-    "estimatedPrice": 62.5,
+    "estimatedPrice": 109.99,
     "sourceUrl": "https://www.totalwine.com/wine/white-wine/chardonnay/morin-pere-fils-chassagne-montrachet/p/2126213445",
     "notes": "Bottle shoulder in photo shows 2022. Value proxied from current nearby-vintage retail listing. | Imported from comprehensive workbook: $50-75",
     "frontPhoto": "IMG_8086.jpg",
     "backPhoto": "IMG_8087.jpg",
-    "cellar": 2,
+    "cellar": 1,
     "zone": "top",
-    "slot": 1,
+    "slot": 11,
     "status": "Ready",
     "tastingNotes": {
       "appearance": "",
@@ -1067,8 +1067,8 @@
       "finish": ""
     },
     "drinkWindow": null,
-    "averagePrice": 62.5,
-    "priceEstimate": "$50-75",
+    "averagePrice": 109.99,
+    "priceEstimate": "$109.99",
     "vineyardNotes": "Historic Burgundy producer established 1822. Grand Vin de Bourgogne. Nuits-Saint-Georges (Côte d'Or).",
     "tags": [],
     "criticRatings": [],
@@ -1085,14 +1085,14 @@
     "category": "Red",
     "size": "750ml",
     "quantity": 1,
-    "estimatedPrice": 100,
+    "estimatedPrice": 64.95,
     "sourceUrl": "https://us.bbr.com/products/2019-brunello-di-montalcino-mate-tuscany-italy",
     "notes": "Vintage visible in photo. | Imported from comprehensive workbook: $80-120",
     "frontPhoto": "IMG_7968.jpg",
     "backPhoto": "IMG_7969.jpg",
     "cellar": 2,
-    "zone": "bottom",
-    "slot": 16,
+    "zone": "fullRed",
+    "slot": 5,
     "status": "Ready",
     "tastingNotes": {
       "appearance": "",
@@ -1101,8 +1101,8 @@
       "finish": ""
     },
     "drinkWindow": null,
-    "averagePrice": 100,
-    "priceEstimate": "$80-120",
+    "averagePrice": 64.95,
+    "priceEstimate": "$64.95",
     "vineyardNotes": "Estate grown and bottled. Family estate production.",
     "tags": [],
     "criticRatings": [],
@@ -1119,14 +1119,14 @@
     "category": "Red",
     "size": "750ml",
     "quantity": 3,
-    "estimatedPrice": 62.5,
+    "estimatedPrice": 174,
     "sourceUrl": "https://wine.sothebys.com/collections/opus-one",
     "notes": "Bottle is multi-vintage/non-vintage. | Imported from comprehensive workbook: $50-75 | User confirmed 3 active bottles.",
     "frontPhoto": "IMG_8115.jpg",
     "backPhoto": "IMG_8116.jpg",
     "cellar": 2,
-    "zone": "bottom",
-    "slot": 5,
+    "zone": "fullRed",
+    "slot": 18,
     "status": "Ready",
     "tastingNotes": {
       "appearance": "",
@@ -1135,8 +1135,8 @@
       "finish": ""
     },
     "drinkWindow": null,
-    "averagePrice": 62.5,
-    "priceEstimate": "$50-75",
+    "averagePrice": 174,
+    "priceEstimate": "$174",
     "vineyardNotes": "Second wine of Opus One. A Napa Valley red wine blend. Produced and bottled by Opus One Winery, Oakville.",
     "tags": [],
     "criticRatings": [],
@@ -1155,7 +1155,7 @@
     "quantity": 4,
     "estimatedPrice": 400,
     "averagePrice": 400,
-    "priceEstimate": "$350-450",
+    "priceEstimate": "$400 conservative valuation",
     "notes": "Front label photo added from cellar-left missing-wines set. Opus back label intentionally deferred; user does not want to unwrap yet. Existing quantity retained from inventory.",
     "vineyardNotes": "Legendary Napa collaboration between Robert Mondavi and Baron Philippe de Rothschild. Premium Bordeaux-style blend.",
     "tastingNotes": {
@@ -1172,8 +1172,8 @@
     "criticRatings": [],
     "dateAdded": "2026-05-02",
     "cellar": 2,
-    "zone": "bottom",
-    "slot": 22
+    "zone": "fullRed",
+    "slot": 21
   },
   {
     "id": 37,
@@ -1188,7 +1188,7 @@
     "quantity": 3,
     "estimatedPrice": 400,
     "averagePrice": 400,
-    "priceEstimate": "$350-450",
+    "priceEstimate": "$400 conservative valuation",
     "notes": "Side/wrapped label photo added from cellar-left missing-wines set. Opus front/back label intentionally deferred; user does not want to unwrap yet. Existing invoice-backed quantity retained.",
     "vineyardNotes": "Legendary Napa collaboration between Robert Mondavi and Baron Philippe de Rothschild. Premium Bordeaux-style blend.",
     "tastingNotes": {
@@ -1205,8 +1205,8 @@
     "criticRatings": [],
     "dateAdded": "2026-05-02",
     "cellar": 2,
-    "zone": "bottom",
-    "slot": 23
+    "zone": "fullRed",
+    "slot": 22
   },
   {
     "id": 38,
@@ -1225,7 +1225,7 @@
     "frontPhoto": "IMG_7981.jpg",
     "backPhoto": "IMG_7980.jpg",
     "cellar": 2,
-    "zone": "bottom",
+    "zone": "fullRed",
     "slot": 13,
     "status": "Ready",
     "tastingNotes": {
@@ -1328,7 +1328,7 @@
     "backPhoto": "IMG_7957.jpg",
     "cellar": 1,
     "zone": "bottom",
-    "slot": 11,
+    "slot": 13,
     "status": "Ready",
     "tastingNotes": {
       "appearance": "",
@@ -1362,7 +1362,7 @@
     "backPhoto": "IMG_7979.jpg",
     "cellar": 1,
     "zone": "bottom",
-    "slot": 15,
+    "slot": 16,
     "status": "Ready",
     "tastingNotes": {
       "appearance": "",
@@ -1395,7 +1395,7 @@
     "frontPhoto": "IMG_8117.jpg",
     "backPhoto": "IMG_8118.jpg",
     "cellar": 2,
-    "zone": "bottom",
+    "zone": "fullRed",
     "slot": 10,
     "status": "Ready",
     "tastingNotes": {
@@ -1490,7 +1490,7 @@
     "category": "White",
     "size": "750ml",
     "quantity": 1,
-    "estimatedPrice": 45,
+    "estimatedPrice": 35,
     "sourceUrl": "https://www.stagsleap.com/products/2023-napa-valley-chardonnay",
     "notes": "Vintage visible in photo. | Imported from comprehensive workbook: $35-55",
     "frontPhoto": "IMG_7962.jpg",
@@ -1506,8 +1506,8 @@
       "finish": ""
     },
     "drinkWindow": null,
-    "averagePrice": 45,
-    "priceEstimate": "$35-55",
+    "averagePrice": 35,
+    "priceEstimate": "$35",
     "vineyardNotes": "First Vintage 1893. Classical standard of viticulture, care of the land, and winemaking. Bottled by Stags' Leap Winery, Napa/Sonoma.",
     "tags": [],
     "criticRatings": [],
@@ -1524,7 +1524,7 @@
     "category": "Red",
     "size": "750ml",
     "quantity": 1,
-    "estimatedPrice": 28.99,
+    "estimatedPrice": 28.95,
     "sourceUrl": "https://buywinesonline.com/products/tommasi-valpolicella-ripasso-2021-750ml",
     "notes": "Vintage visible in photo. | Imported from comprehensive workbook",
     "frontPhoto": "IMG_7964.jpg",
@@ -1540,8 +1540,8 @@
       "finish": ""
     },
     "drinkWindow": null,
-    "averagePrice": 28.99,
-    "priceEstimate": "$28.99",
+    "averagePrice": 28.95,
+    "priceEstimate": "$28.95",
     "vineyardNotes": "Valpolicella Ripasso Classico Superiore DOCG. 30th anniversary (1995-2025)",
     "tags": [],
     "criticRatings": [],
@@ -1592,14 +1592,14 @@
     "category": "Red",
     "size": "750ml",
     "quantity": 1,
-    "estimatedPrice": 42.5,
+    "estimatedPrice": 39.99,
     "sourceUrl": "https://www.wine.com/product/xanadu-cabernet-sauvignon-2022/1980979",
     "notes": "Vintage visible in photo. | Imported from comprehensive workbook: $35-50",
     "frontPhoto": "IMG_8099.jpg",
     "backPhoto": "IMG_8100.jpg",
     "cellar": 1,
     "zone": "bottom",
-    "slot": 13,
+    "slot": 10,
     "status": "Ready",
     "tastingNotes": {
       "appearance": "",
@@ -1608,8 +1608,8 @@
       "finish": ""
     },
     "drinkWindow": null,
-    "averagePrice": 42.5,
-    "priceEstimate": "$35-50",
+    "averagePrice": 39.99,
+    "priceEstimate": "$39.99",
     "vineyardNotes": "Premium Margaret River region producer. Known for elegant Cabernet Sauvignon.",
     "tags": [],
     "criticRatings": [],
@@ -1646,7 +1646,7 @@
     "criticRatings": [],
     "dateAdded": "2026-05-02",
     "cellar": 2,
-    "zone": "bottom",
+    "zone": "fullRed",
     "slot": 14
   }
 ]

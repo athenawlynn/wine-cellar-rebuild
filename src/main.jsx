@@ -40,7 +40,8 @@ import "./styles.css";
 
 const BRAND_NAME = "Lynn Cave Privée";
 const PHOTO_BASE = "/photos/";
-const WINE_STORAGE_KEY = "lynn-cellar-wines-2026-05-20-rack-layout";
+const WINE_STORAGE_KEY = "lynn-cellar-wines-2026-05-20-price-corrected";
+const PREVIOUS_WINE_STORAGE_KEYS = ["lynn-cellar-wines-2026-05-20-rack-layout"];
 const ARCHIVE_STORAGE_KEY = "lynn-cellar-archive-2026-05-02-inventory";
 const WISHLIST_STORAGE_KEY = "lynn-cellar-wishlist";
 const VENDOR_STORAGE_KEY = "lynn-cellar-vendors";
@@ -319,11 +320,20 @@ function applyCellarPlacement(wines) {
 }
 
 function loadWines() {
-  const saved = localStorage.getItem(WINE_STORAGE_KEY);
+  const saved = localStorage.getItem(WINE_STORAGE_KEY) || PREVIOUS_WINE_STORAGE_KEYS.map((key) => localStorage.getItem(key)).find(Boolean);
   if (!saved) return applyCellarPlacement(seedWines);
   const savedWines = JSON.parse(saved).map(normalizeWine);
   const savedById = new Map(savedWines.map((wine) => [wine.id, wine]));
-  const mergedSeed = seedWines.map((wine) => normalizeWine({ ...wine, ...(savedById.get(wine.id) || {}) }));
+  const mergedSeed = seedWines.map((seedWine) => {
+    const savedWine = savedById.get(seedWine.id) || {};
+    return normalizeWine({
+      ...seedWine,
+      ...savedWine,
+      averagePrice: seedWine.averagePrice,
+      estimatedPrice: seedWine.estimatedPrice,
+      priceEstimate: seedWine.priceEstimate,
+    });
+  });
   const customWines = savedWines.filter((wine) => !seedWines.some((seed) => seed.id === wine.id));
   return applyCellarPlacement([...mergedSeed, ...customWines]);
 }
