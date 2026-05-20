@@ -189,7 +189,6 @@ main {
 .topbar,
 .section-title,
 .cellar-header,
-.cellar-view-header,
 .zone-heading,
 .drawer-header,
 .sheet-header {
@@ -205,7 +204,13 @@ main {
 
 .topbar-actions {
   display: flex;
+  align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
+}
+
+.global-price-toggle {
+  min-height: 42px;
 }
 
 .eyebrow {
@@ -444,19 +449,6 @@ p {
   display: grid;
   grid-template-columns: 1fr;
   gap: 18px;
-}
-
-.cellar-view-header {
-  align-items: center;
-}
-
-.cellar-view-header .rule-band {
-  flex: 1;
-}
-
-.price-toggle {
-  flex: 0 0 auto;
-  white-space: nowrap;
 }
 
 .system-grid span,
@@ -1394,14 +1386,6 @@ video {
   .split-grid,
   .detail-hero {
     grid-template-columns: 1fr;
-  }
-
-  .cellar-view-header {
-    display: grid;
-  }
-
-  .price-toggle {
-    justify-self: start;
   }
 
   .wine-row {

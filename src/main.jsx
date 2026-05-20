@@ -505,6 +505,7 @@ function App() {
   const [scanOpen, setScanOpen] = useState(false);
   const [toast, setToast] = useState("");
   const [theme, setTheme] = useState(() => localStorage.getItem(THEME_STORAGE_KEY) || "light");
+  const [showPrices, setShowPrices] = useState(true);
   const toastTimer = useRef(null);
 
   const activeWine = wines.find((wine) => wine.id === activeWineId) || wines[0];
@@ -700,6 +701,16 @@ function App() {
             <h1>{topbarTitle(view)}</h1>
           </div>
           <div className="topbar-actions">
+            <button
+              className="ghost-button global-price-toggle"
+              type="button"
+              onClick={() => setShowPrices((current) => !current)}
+              aria-pressed={showPrices}
+              title={showPrices ? "Hide prices" : "Show prices"}
+            >
+              {showPrices ? <EyeOff size={17} /> : <Eye size={17} />}
+              {showPrices ? "Hide Prices" : "Show Prices"}
+            </button>
             <button className="icon-button" title="Toggle dark mode" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
               {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
             </button>
@@ -710,7 +721,7 @@ function App() {
         </header>
 
         {view === "dashboard" && <Dashboard stats={stats} wines={wines} openWine={(id) => { setActiveWineId(id); setView("detail"); }} setView={setView} openTool={openTool} />}
-        {view === "cellars" && <Cellars wines={wines} openWine={(id) => { setActiveWineId(id); setView("detail"); }} />}
+        {view === "cellars" && <Cellars wines={wines} openWine={(id) => { setActiveWineId(id); setView("detail"); }} showPrices={showPrices} />}
         {view === "collection" && (
           <Collection
             wines={wines}
@@ -957,23 +968,10 @@ function EmptyState({ title, body }) {
   );
 }
 
-function Cellars({ wines, openWine }) {
-  const [showRackPrices, setShowRackPrices] = useState(true);
-
+function Cellars({ wines, openWine, showPrices }) {
   return (
     <div className="cellars-page">
-      <div className="cellar-view-header">
-        <CellarRules />
-        <button
-          className="ghost-button price-toggle"
-          type="button"
-          onClick={() => setShowRackPrices((current) => !current)}
-          aria-pressed={showRackPrices}
-        >
-          {showRackPrices ? <EyeOff size={17} /> : <Eye size={17} />}
-          {showRackPrices ? "Hide Prices" : "Show Prices"}
-        </button>
-      </div>
+      <CellarRules />
       {[1, 2].map((cellar) => (
         <section className="cellar-shell" key={cellar}>
           <div className="cellar-header">
@@ -984,8 +982,8 @@ function Cellars({ wines, openWine }) {
             <span className="pill">{wines.filter((wine) => wine.cellar === cellar).reduce((sum, wine) => sum + Number(wine.quantity || 0), 0)}/{CELLAR_CAPACITY} bottle slots filled</span>
           </div>
           <div className="cellar-layout">
-            <Zone title="White Racks" cellar={cellar} zone="top" wines={wines} openWine={openWine} showPrices={showRackPrices} />
-            <Zone title="Red Racks" cellar={cellar} zone="bottom" wines={wines} openWine={openWine} showPrices={showRackPrices} />
+            <Zone title="White Racks" cellar={cellar} zone="top" wines={wines} openWine={openWine} showPrices={showPrices} />
+            <Zone title="Red Racks" cellar={cellar} zone="bottom" wines={wines} openWine={openWine} showPrices={showPrices} />
           </div>
         </section>
       ))}
