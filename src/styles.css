@@ -433,10 +433,15 @@ p {
 }
 
 .split-grid,
-.cellar-layout,
 .detail-hero {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(320px, 0.72fr);
+  gap: 18px;
+}
+
+.cellar-layout {
+  display: grid;
+  grid-template-columns: 1fr;
   gap: 18px;
 }
 
@@ -1373,7 +1378,6 @@ video {
   }
 
   .split-grid,
-  .cellar-layout,
   .detail-hero {
     grid-template-columns: 1fr;
   }
