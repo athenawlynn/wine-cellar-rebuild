@@ -261,6 +261,22 @@ function cellarOrderedWines(wines) {
   ));
 }
 
+function bottleSlotsForWines(wines) {
+  let slot = 0;
+  return [...wines]
+    .sort((a, b) => Number(a.slot || 0) - Number(b.slot || 0) || placementSort(a, b))
+    .flatMap((wine) => Array.from({ length: Math.max(1, Number(wine.quantity || 1)) }, (_, index) => {
+      slot += 1;
+      return {
+        id: `${wine.id}-${index + 1}`,
+        wine,
+        bottleNumber: index + 1,
+        bottleTotal: Math.max(1, Number(wine.quantity || 1)),
+        slot,
+      };
+    }));
+}
+
 function applyCellarPlacement(wines) {
   const grouped = new Map();
 
@@ -501,16 +517,18 @@ function App() {
     const capacity = CELLAR_CAPACITY * 2;
     const cellar1 = wines.filter((wine) => wine.cellar === 1);
     const cellar2 = wines.filter((wine) => wine.cellar === 2);
+    const cellar1Bottles = cellar1.reduce((sum, wine) => sum + Number(wine.quantity || 0), 0);
+    const cellar2Bottles = cellar2.reduce((sum, wine) => sum + Number(wine.quantity || 0), 0);
     return {
       records: wines.length,
       bottles,
       value,
       capacity,
-      openSlots: Math.max(0, capacity - wines.length),
-      cellar1: cellar1.length,
-      cellar2: cellar2.length,
-      cellar1Bottles: cellar1.reduce((sum, wine) => sum + Number(wine.quantity || 0), 0),
-      cellar2Bottles: cellar2.reduce((sum, wine) => sum + Number(wine.quantity || 0), 0),
+      openSlots: Math.max(0, capacity - bottles),
+      cellar1: cellar1Bottles,
+      cellar2: cellar2Bottles,
+      cellar1Bottles,
+      cellar2Bottles,
       lowStock: wines.filter((wine) => Number(wine.quantity || 0) <= 1).length,
     };
   }, [wines]);
@@ -773,7 +791,7 @@ function Dashboard({ stats, wines, openWine, setView, openTool }) {
 
       <section className="metric-panel">
         <Metric label="Entered Records" value={stats.records} />
-        <Metric label="Physical Capacity" value={`${stats.records}/${stats.capacity}`} note={`${stats.openSlots} open slots`} />
+        <Metric label="Physical Capacity" value={`${stats.bottles}/${stats.capacity}`} note={`${stats.openSlots} open slots`} />
         <Metric label="Collection Value" value={money(stats.value)} />
         <Metric label="Actual Bottles" value={stats.bottles} note="Counts quantities" />
       </section>
@@ -818,8 +836,8 @@ function Dashboard({ stats, wines, openWine, setView, openTool }) {
 
       <Section title="Cellar Split" icon={<ClipboardList size={18} />}>
         <div className="cellar-summary-grid">
-          <Metric label="Left Cellar" value={stats.cellar1} note={`$50 and under · ${stats.cellar1Bottles} bottles`} />
-          <Metric label="Right Cellar" value={stats.cellar2} note={`Over $50 · ${stats.cellar2Bottles} bottles`} />
+          <Metric label="Left Cellar" value={stats.cellar1} note="$50 and under bottle slots" />
+          <Metric label="Right Cellar" value={stats.cellar2} note="Over $50 bottle slots" />
         </div>
       </Section>
     </div>
@@ -948,7 +966,7 @@ function Cellars({ wines, openWine }) {
               <p className="eyebrow">{cellar === 1 ? "$50 and under" : "Over $50"}</p>
               <h2>{cellar === 1 ? "Left Cellar" : "Right Cellar"}</h2>
             </div>
-            <span className="pill">{wines.filter((wine) => wine.cellar === cellar).length}/{CELLAR_CAPACITY} records placed</span>
+            <span className="pill">{wines.filter((wine) => wine.cellar === cellar).reduce((sum, wine) => sum + Number(wine.quantity || 0), 0)}/{CELLAR_CAPACITY} bottle slots filled</span>
           </div>
           <div className="cellar-layout">
             <Zone title="White Racks" cellar={cellar} zone="top" wines={wines} openWine={openWine} />
@@ -984,9 +1002,10 @@ function CellarRules() {
 
 function Zone({ title, cellar, zone, wines, openWine }) {
   const zoneWines = wines.filter((wine) => wine.cellar === cellar && wine.zone === zone);
+  const bottleSlots = bottleSlotsForWines(zoneWines);
   const rackType = zone === "top" ? "White" : "Red";
-  const overflowWines = zoneWines.filter((wine) => Number(wine.slot || 0) > ZONE_CAPACITY[zone]);
-  const overflowCount = Math.max(0, zoneWines.length - ZONE_CAPACITY[zone]);
+  const overflowBottles = bottleSlots.filter((item) => item.slot > ZONE_CAPACITY[zone]);
+  const overflowCount = Math.max(0, bottleSlots.length - ZONE_CAPACITY[zone]);
   const bottles = zoneWines.reduce((sum, wine) => sum + Number(wine.quantity || 0), 0);
 
   return (
@@ -999,7 +1018,7 @@ function Zone({ title, cellar, zone, wines, openWine }) {
         <Thermometer size={18} />
       </div>
       <div className="rack-summary">
-        <span>{zoneWines.length}/{ZONE_CAPACITY[zone]} slots filled</span>
+        <span>{Math.min(bottleSlots.length, ZONE_CAPACITY[zone])}/{ZONE_CAPACITY[zone]} slots filled</span>
         <span>{bottles} bottle{bottles === 1 ? "" : "s"}</span>
         <span>{money(zoneWines.reduce((sum, wine) => sum + averagePrice(wine) * Number(wine.quantity || 0), 0))} value</span>
       </div>
@@ -1020,7 +1039,8 @@ function Zone({ title, cellar, zone, wines, openWine }) {
               <div className="slot-grid">
                 {Array.from({ length: rack.capacity }, (_, index) => {
                   const slot = slotOffset + index + 1;
-                  const wine = zoneWines.find((item) => item.slot === slot);
+                  const bottle = bottleSlots.find((item) => item.slot === slot);
+                  const wine = bottle?.wine;
                   const meta = getSlotMeta(zone, slot);
                   return (
                     <button
@@ -1044,6 +1064,7 @@ function Zone({ title, cellar, zone, wines, openWine }) {
                           <span className="slot-hover-copy">
                             <strong>{wineTitle(wine)}</strong>
                             <small>{wine.variety} · {wine.region}</small>
+                            {bottle.bottleTotal > 1 && <small>Bottle {bottle.bottleNumber} of {bottle.bottleTotal}</small>}
                             <small>{cellar === 1 ? "Left" : "Right"} · {meta.slotLabel}</small>
                             <span>{money(averagePrice(wine))}</span>
                           </span>
@@ -1057,12 +1078,12 @@ function Zone({ title, cellar, zone, wines, openWine }) {
           );
         })}
       </div>
-      {overflowWines.length > 0 && (
+      {overflowBottles.length > 0 && (
         <div className="overflow-list">
           <span>Overflow</span>
-          {overflowWines.map((wine) => (
-            <button key={wine.id} onClick={() => openWine(wine.id)}>
-              {wineTitle(wine)}
+          {overflowBottles.map((bottle) => (
+            <button key={bottle.id} onClick={() => openWine(bottle.wine.id)}>
+              {wineTitle(bottle.wine)}
             </button>
           ))}
         </div>
