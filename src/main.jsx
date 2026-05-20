@@ -249,6 +249,8 @@ function isWhiteZoneWine(wine) {
 }
 
 function cellarForWine(wine) {
+  const cellarOverride = Number(wine.cellarOverride);
+  if ([1, 2].includes(cellarOverride)) return cellarOverride;
   if (isWhiteZoneWine(wine)) return 1;
   return averagePrice(wine) <= 50 ? 1 : 2;
 }
@@ -260,6 +262,11 @@ function zoneForWine(wine, cellar = cellarForWine(wine)) {
 
 function averagePrice(wine) {
   return Number(wine.averagePrice ?? wine.estimatedPrice ?? 0);
+}
+
+function placementSortPrice(wine) {
+  const sortPrice = Number(wine.placementSortPrice);
+  return Number.isFinite(sortPrice) ? sortPrice : averagePrice(wine);
 }
 
 function placementPriority(wine) {
@@ -274,7 +281,7 @@ function placementSort(a, b) {
   if (aPriority !== null || bPriority !== null) {
     return (
       (aPriority ?? -Infinity) - (bPriority ?? -Infinity) ||
-      averagePrice(a) - averagePrice(b) ||
+      placementSortPrice(a) - placementSortPrice(b) ||
       String(a.producer || "").localeCompare(String(b.producer || "")) ||
       String(a.wineName || "").localeCompare(String(b.wineName || "")) ||
       Number(a.vintage || 0) - Number(b.vintage || 0) ||
@@ -283,7 +290,7 @@ function placementSort(a, b) {
   }
 
   return (
-    averagePrice(a) - averagePrice(b) ||
+    placementSortPrice(a) - placementSortPrice(b) ||
     String(a.producer || "").localeCompare(String(b.producer || "")) ||
     String(a.wineName || "").localeCompare(String(b.wineName || "")) ||
     Number(a.vintage || 0) - Number(b.vintage || 0) ||
