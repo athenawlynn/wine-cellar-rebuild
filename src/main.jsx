@@ -1031,13 +1031,23 @@ function Zone({ title, cellar, zone, wines, openWine }) {
                       title={wine ? wineTitle(wine) : "Empty slot"}
                     >
                       <span className="slot-number">{meta.position}</span>
-                      {wine ? <span className="slot-name">{wine.producer}</span> : <span className="slot-empty">Empty</span>}
+                      {wine ? (
+                        <>
+                          <span className="slot-name">{wine.producer}</span>
+                          <span className="slot-price">{money(averagePrice(wine))}</span>
+                        </>
+                      ) : <span className="slot-empty">Empty</span>}
                       {wine && (
                         <span className="slot-hover">
-                          {wine.frontPhoto && <img src={photoUrl(wine.frontPhoto)} alt={`${wineTitle(wine)} bottle`} />}
-                          <strong>{wineTitle(wine)}</strong>
-                          <small>{wine.variety} · {money(averagePrice(wine))}</small>
-                          <small>{cellar === 1 ? "Left" : "Right"} · {meta.slotLabel}</small>
+                          <span className="slot-hover-photo">
+                            {wine.frontPhoto ? <img src={photoUrl(wine.frontPhoto)} alt={`${wineTitle(wine)} front label`} /> : <Wine size={30} />}
+                          </span>
+                          <span className="slot-hover-copy">
+                            <strong>{wineTitle(wine)}</strong>
+                            <small>{wine.variety} · {wine.region}</small>
+                            <small>{cellar === 1 ? "Left" : "Right"} · {meta.slotLabel}</small>
+                            <span>{money(averagePrice(wine))}</span>
+                          </span>
                         </span>
                       )}
                     </button>
