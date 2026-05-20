@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
+  Archive as ArchiveIcon,
   BadgeDollarSign,
   Barcode,
   BookOpen,
@@ -658,7 +659,7 @@ function App() {
   function drinkWine(id) {
     const wine = wines.find((item) => item.id === id);
     if (!wine) return;
-    if (!window.confirm(`Archive one bottle of ${wineTitle(wine)} as consumed?`)) return;
+    if (!window.confirm(`Archive one consumed bottle of ${wineTitle(wine)}?`)) return;
     const archivedWine = normalizeWine({
       ...wine,
       quantity: 1,
@@ -1709,7 +1710,7 @@ function WineDetail({ wine, back, onDrink, onUpdate, onNavigate, sequence = [] }
           <p>{buildWineOverview(wine)}</p>
           <div className="detail-actions">
             <button className="ghost-button" onClick={() => setEditing(true)}><Edit3 size={17} /> Edit</button>
-            <button className="danger-button" onClick={() => onDrink(wine.id)}><Trash2 size={17} /> Drink</button>
+            <button className="archive-button" onClick={() => onDrink(wine.id)}><ArchiveIcon size={17} /> Archive Bottle</button>
           </div>
         </div>
       </section>
@@ -1990,7 +1991,7 @@ function ArchivePage({ archive, onRestore }) {
         </div>
         </>
       ) : (
-        <EmptyState title="No bottles consumed yet" body="Use the Drink button on a bottle detail page to archive it here for future reference." />
+        <EmptyState title="No bottles consumed yet" body="Use the Archive Bottle button on a bottle detail page to move consumed bottles here." />
       )}
     </div>
   );
