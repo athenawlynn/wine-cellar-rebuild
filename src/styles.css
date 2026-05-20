@@ -1483,6 +1483,289 @@ video {
   font-size: 0.9rem;
 }
 
+.cellar-book-view {
+  display: grid;
+  gap: 22px;
+}
+
+.print-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.print-toolbar h2 {
+  margin-bottom: 0;
+}
+
+.print-toolbar > div:first-child {
+  flex: 1 1 220px;
+}
+
+.print-toolbar > label:first-of-type {
+  flex: 0 1 220px;
+}
+
+.print-toolbar .toggle-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 248, 239, 0.045);
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: nowrap;
+}
+
+.print-toolbar .toggle-line input {
+  width: auto;
+  min-height: auto;
+}
+
+.print-button {
+  width: max-content;
+}
+
+.cellar-book {
+  display: grid;
+  gap: 24px;
+  color: #261615;
+}
+
+.print-page {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #d8c7b2;
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(142, 96, 39, 0.06), transparent 220px),
+    #fffaf0;
+  color: #261615;
+  padding: clamp(28px, 4vw, 54px);
+  box-shadow: 0 24px 72px rgba(26, 14, 12, 0.14);
+}
+
+.cellar-book-cover {
+  display: grid;
+  align-content: center;
+  min-height: 840px;
+  text-align: center;
+}
+
+.cover-rule {
+  width: 92px;
+  height: 3px;
+  margin: 0 auto 28px;
+  background: #9a682a;
+}
+
+.cellar-book-cover h1 {
+  margin: 0;
+  color: #260f12;
+  font-size: clamp(3.2rem, 6.4vw, 6rem);
+  overflow-wrap: anywhere;
+}
+
+.cellar-book-cover h2 {
+  margin: 10px 0 34px;
+  color: #7a1828;
+  font-size: clamp(1.5rem, 3vw, 2.6rem);
+  letter-spacing: 0.02em;
+}
+
+.cellar-book-cover footer {
+  margin-top: 44px;
+  color: #6a5650;
+  font-size: 0.95rem;
+}
+
+.print-running-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #dbc9b4;
+  color: #7a1828;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 0.92rem;
+  letter-spacing: 0.04em;
+}
+
+.print-section-title {
+  margin-bottom: 22px;
+}
+
+.print-section-title h2 {
+  margin: 0;
+  color: #260f12;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+}
+
+.print-page .eyebrow {
+  color: #8d642e;
+}
+
+.print-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.cover-metrics {
+  max-width: 880px;
+  margin: 0 auto;
+}
+
+.print-metric,
+.print-summary-block {
+  border: 1px solid #decbb5;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.58);
+  padding: 16px;
+}
+
+.print-metric span,
+.print-summary-line span,
+.print-muted {
+  color: #6a5650;
+}
+
+.print-metric strong {
+  display: block;
+  margin-top: 6px;
+  color: #260f12;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.55rem;
+  font-weight: 500;
+}
+
+.print-summary-block h3 {
+  color: #7a1828;
+  font-size: 1.15rem;
+}
+
+.print-summary-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(122, 24, 40, 0.11);
+}
+
+.print-summary-line:last-child {
+  border-bottom: 0;
+}
+
+.print-summary-line strong {
+  color: #260f12;
+  text-align: right;
+}
+
+.print-group {
+  margin-top: 20px;
+}
+
+.print-group-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #9a682a;
+}
+
+.print-group-heading h3 {
+  margin: 0;
+  color: #7a1828;
+  font-size: 1.45rem;
+}
+
+.print-group-heading span {
+  color: #6a5650;
+  font-weight: 700;
+}
+
+.print-wine-list {
+  display: grid;
+  gap: 8px;
+}
+
+.print-wine-row {
+  display: grid;
+  grid-template-columns: 66px minmax(0, 1fr);
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid #e3d3c0;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.print-wine-vintage {
+  color: #9a682a;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.24rem;
+  font-weight: 700;
+}
+
+.print-wine-title {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: #260f12;
+  font-size: 1rem;
+}
+
+.print-wine-title strong {
+  font-weight: 800;
+}
+
+.print-wine-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-top: 4px;
+  color: #4d3935;
+  font-size: 0.9rem;
+}
+
+.print-wine-meta span:not(:last-child)::after {
+  content: "·";
+  margin-left: 12px;
+  color: #a88968;
+}
+
+.print-price {
+  color: #7a1828;
+  font-weight: 800;
+}
+
+.print-notes {
+  margin: 6px 0 0;
+  color: #5b4641;
+  font-size: 0.92rem;
+}
+
+.cellar-book.compact .print-wine-row {
+  grid-template-columns: 54px minmax(0, 1fr);
+  gap: 10px;
+  padding: 8px 0;
+}
+
+.cellar-book.compact .print-notes,
+.cellar-book.compact .print-muted {
+  display: none;
+}
+
 @media (max-width: 1120px) {
   .metric-panel,
   .service-grid,
@@ -1519,7 +1802,7 @@ video {
   }
 
   nav {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(7, minmax(0, 1fr));
     overflow-x: auto;
   }
 
@@ -1583,8 +1866,145 @@ video {
     aspect-ratio: 4 / 3;
   }
 
+  .print-toolbar,
+  .print-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
   .site-footer {
     display: grid;
+  }
+}
+
+@media print {
+  @page {
+    margin: 0.6in;
+  }
+
+  *,
+  *::before,
+  *::after {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+    box-shadow: none !important;
+  }
+
+  :root,
+  body {
+    background: #fffaf0 !important;
+    color: #261615 !important;
+  }
+
+  .app-shell {
+    display: block !important;
+    min-height: auto !important;
+    background: #fffaf0 !important;
+    color: #261615 !important;
+  }
+
+  .sidebar,
+  .topbar,
+  .site-footer,
+  .toast,
+  .drawer-backdrop,
+  .scan-drawer,
+  .print-toolbar,
+  .icon-button,
+  .ghost-button,
+  .archive-button,
+  .danger-button,
+  .save-button,
+  .primary-link {
+    display: none !important;
+  }
+
+  main {
+    padding: 0 !important;
+  }
+
+  .cellar-book-view,
+  .cellar-book {
+    display: block !important;
+    color: #261615 !important;
+    background: #fffaf0 !important;
+  }
+
+  .print-page {
+    min-height: auto;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: #fffaf0 !important;
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .print-page:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  .cellar-book-cover {
+    min-height: 9.4in;
+  }
+
+  .cellar-book-cover h1 {
+    font-size: 42pt;
+  }
+
+  .cellar-book-cover h2 {
+    font-size: 20pt;
+  }
+
+  .print-section-title h2 {
+    font-size: 19pt;
+  }
+
+  .print-group-heading h3 {
+    font-size: 15pt;
+  }
+
+  .print-running-header,
+  .print-wine-meta,
+  .print-muted,
+  .print-notes,
+  .print-summary-line,
+  .cellar-book-cover footer,
+  .print-page p {
+    font-size: 9.5pt;
+  }
+
+  .print-wine-title,
+  .print-wine-vintage {
+    font-size: 11pt;
+  }
+
+  .print-summary-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+
+  .print-metric,
+  .print-summary-block {
+    padding: 10px;
+  }
+
+  .print-metric strong {
+    font-size: 17pt;
+  }
+
+  .print-section,
+  .cellar-book-summary {
+    break-before: page;
+    page-break-before: always;
+  }
+
+  .print-wine-row,
+  .print-summary-block,
+  .print-group {
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 }
 
