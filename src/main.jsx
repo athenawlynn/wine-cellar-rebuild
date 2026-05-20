@@ -341,13 +341,14 @@ function getSlotMeta(zone, slot) {
         rack: rack.rack,
         position: remaining,
         capacity: rack.capacity,
-        label: `${rackType} Rack ${rack.rack}`,
+        label: `${rackType} ${rack.rack}`,
+        slotLabel: `${rackType} ${rack.rack} · Slot ${remaining}`,
         shortLabel: `${prefix}${rack.rack}-${remaining}`,
       };
     }
     remaining -= rack.capacity;
   }
-  return { rack: null, position: slot, capacity: ZONE_CAPACITY[zone], label: "Overflow", shortLabel: `${prefix}+${slot}` };
+  return { rack: null, position: slot, capacity: ZONE_CAPACITY[zone], label: "Overflow", slotLabel: "Overflow", shortLabel: `${prefix}+${slot}` };
 }
 
 function suggestPlacement(wines, draft) {
@@ -915,7 +916,7 @@ function BottleList({ wines, openWine, compact = false }) {
       {wines.map((wine) => (
         <button key={wine.id} onClick={() => openWine(wine.id)}>
           <span>{wineTitle(wine)}</span>
-          <small>{wine.category} · {money(averagePrice(wine))} · {wine.cellar === 1 ? "Left" : "Right"} · {getSlotMeta(wine.zone, wine.slot).shortLabel}</small>
+          <small>{wine.category} · {money(averagePrice(wine))} · {wine.cellar === 1 ? "Left" : "Right"} · {getSlotMeta(wine.zone, wine.slot).slotLabel}</small>
         </button>
       ))}
     </div>
@@ -979,7 +980,7 @@ function CellarRules() {
 
 function Zone({ title, cellar, zone, wines, openWine }) {
   const zoneWines = wines.filter((wine) => wine.cellar === cellar && wine.zone === zone);
-  const slots = Array.from({ length: ZONE_CAPACITY[zone] }, (_, index) => index + 1);
+  const rackType = zone === "top" ? "White" : "Red";
   const overflowWines = zoneWines.filter((wine) => Number(wine.slot || 0) > ZONE_CAPACITY[zone]);
   const overflowCount = Math.max(0, zoneWines.length - ZONE_CAPACITY[zone]);
 
@@ -992,28 +993,42 @@ function Zone({ title, cellar, zone, wines, openWine }) {
         </div>
         <Thermometer size={18} />
       </div>
-      <div className="slot-grid">
-        {slots.map((slot) => {
-          const wine = zoneWines.find((item) => item.slot === slot);
-          const meta = getSlotMeta(zone, slot);
+      <div className="rack-stack">
+        {COOLER_LAYOUT[zone].map((rack, rackIndex) => {
+          const slotOffset = COOLER_LAYOUT[zone].slice(0, rackIndex).reduce((sum, item) => sum + item.capacity, 0);
           return (
-            <button
-              key={slot}
-              className={`slot ${wine ? "filled" : ""}`}
-              onClick={() => wine && openWine(wine.id)}
-              title={wine ? wineTitle(wine) : "Empty slot"}
-            >
-              <span className="slot-number">{meta.shortLabel}</span>
-              {wine ? <span className="slot-name">{wine.producer}</span> : <span className="slot-empty">Empty</span>}
-              {wine && (
-                <span className="slot-hover">
-                  {wine.frontPhoto && <img src={photoUrl(wine.frontPhoto)} alt={`${wineTitle(wine)} bottle`} />}
-                  <strong>{wineTitle(wine)}</strong>
-                  <small>{wine.variety} · {money(averagePrice(wine))}</small>
-                  <small>{cellar === 1 ? "Left" : "Right"} · {meta.label} · Slot {meta.position}</small>
-                </span>
-              )}
-            </button>
+            <div className="rack-row" key={`${zone}-${rack.rack}`}>
+              <div className="rack-label">
+                <strong>{rackType} {rack.rack}</strong>
+                <span>8 slots</span>
+              </div>
+              <div className="slot-grid">
+                {Array.from({ length: rack.capacity }, (_, index) => {
+                  const slot = slotOffset + index + 1;
+                  const wine = zoneWines.find((item) => item.slot === slot);
+                  const meta = getSlotMeta(zone, slot);
+                  return (
+                    <button
+                      key={slot}
+                      className={`slot ${wine ? "filled" : ""}`}
+                      onClick={() => wine && openWine(wine.id)}
+                      title={wine ? wineTitle(wine) : "Empty slot"}
+                    >
+                      <span className="slot-number">{meta.position}</span>
+                      {wine ? <span className="slot-name">{wine.producer}</span> : <span className="slot-empty">Empty</span>}
+                      {wine && (
+                        <span className="slot-hover">
+                          {wine.frontPhoto && <img src={photoUrl(wine.frontPhoto)} alt={`${wineTitle(wine)} bottle`} />}
+                          <strong>{wineTitle(wine)}</strong>
+                          <small>{wine.variety} · {money(averagePrice(wine))}</small>
+                          <small>{cellar === 1 ? "Left" : "Right"} · {meta.slotLabel}</small>
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           );
         })}
       </div>
@@ -1472,7 +1487,7 @@ function Collection({ wines, filters, setFilters, openWine }) {
               <span>{wine.region}</span>
               <span>{money(averagePrice(wine))}</span>
               <span>Qty {wine.quantity}</span>
-              <span>{wine.cellar === 1 ? "Left" : "Right"} · {getSlotMeta(wine.zone, wine.slot).shortLabel}</span>
+              <span>{wine.cellar === 1 ? "Left" : "Right"} · {getSlotMeta(wine.zone, wine.slot).slotLabel}</span>
             </button>
           ))}
         </div>
@@ -1551,7 +1566,7 @@ function WineDetail({ wine, back, onDrink, onUpdate, onNavigate, sequence = [] }
           <Spec label="Average price" value={money(averagePrice(wine))} />
           {wine.priceEstimate && <Spec label="Workbook estimate" value={wine.priceEstimate} />}
           <Spec label="Quantity" value={wine.quantity} />
-          <Spec label="Location" value={`${wine.cellar === 1 ? "Left Cellar" : "Right Cellar"}, ${getSlotMeta(wine.zone, wine.slot).label}, slot ${getSlotMeta(wine.zone, wine.slot).position}`} />
+          <Spec label="Location" value={`${wine.cellar === 1 ? "Left Cellar" : "Right Cellar"}, ${getSlotMeta(wine.zone, wine.slot).slotLabel}`} />
           <Spec label="Drink window" value={inferDrinkWindow(wine)} />
         </DetailCard>
         <DetailCard title="About the Vineyard">
@@ -1850,7 +1865,7 @@ function ScanDrawer({ wines, onClose, onSave }) {
           <label className="wide drawer-note">How Acquired<textarea value={draft.acquiredNotes} onChange={(event) => setDraft((current) => ({ ...current, acquiredNotes: event.target.value }))} /></label>
           <div className="placement-preview">
             <span>Suggested placement</span>
-            <strong>{placement.cellar === 1 ? "Left Cellar" : "Right Cellar"} · {getSlotMeta(placement.zone, placement.slot).shortLabel}</strong>
+            <strong>{placement.cellar === 1 ? "Left Cellar" : "Right Cellar"} · {getSlotMeta(placement.zone, placement.slot).slotLabel}</strong>
             <small>{averagePrice(placement) < 50 ? "Under $50" : "$50+"}</small>
           </div>
           <button className="save-button" type="submit" disabled={saving}>
