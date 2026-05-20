@@ -639,9 +639,34 @@ p {
   padding: 16px;
 }
 
+.rack-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.rack-summary span {
+  padding: 5px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.overflow-warning {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border: 1px solid rgba(169, 48, 72, 0.36);
+  border-radius: 8px;
+  background: rgba(169, 48, 72, 0.1);
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
 .rack-stack {
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 .rack-row {
@@ -685,12 +710,12 @@ p {
   display: grid;
   align-content: center;
   gap: 5px;
-  min-height: 74px;
+  min-height: 68px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: rgba(255, 248, 239, 0.045);
   color: var(--text);
-  padding: 8px;
+  padding: 7px;
   text-align: left;
 }
 

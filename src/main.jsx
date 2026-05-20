@@ -38,12 +38,13 @@ import "./styles.css";
 
 const BRAND_NAME = "Lynn Cave Privée";
 const PHOTO_BASE = "/photos/";
-const WINE_STORAGE_KEY = "lynn-cellar-wines-2026-05-02-inventory";
+const WINE_STORAGE_KEY = "lynn-cellar-wines-2026-05-20-rack-layout";
 const ARCHIVE_STORAGE_KEY = "lynn-cellar-archive-2026-05-02-inventory";
 const WISHLIST_STORAGE_KEY = "lynn-cellar-wishlist";
 const VENDOR_STORAGE_KEY = "lynn-cellar-vendors";
 const MAINTENANCE_STORAGE_KEY = "lynn-cellar-maintenance";
 const EVENT_STORAGE_KEY = "lynn-cellar-events";
+const THEME_STORAGE_KEY = "lynn-cellar-theme";
 
 const CELLAR_MODEL = {
   maker: "Allavino",
@@ -230,7 +231,7 @@ function inferDrinkWindow(wine) {
 }
 
 function cellarForWine(wine) {
-  return averagePrice(wine) < 50 ? 1 : 2;
+  return averagePrice(wine) <= 50 ? 1 : 2;
 }
 
 function zoneForWine(wine) {
@@ -485,11 +486,15 @@ function App() {
   const [events, setEvents] = useState(() => loadStoredList(EVENT_STORAGE_KEY, defaultEvents));
   const [scanOpen, setScanOpen] = useState(false);
   const [toast, setToast] = useState("");
-  const [theme, setTheme] = useState("light");
+  const [theme, setTheme] = useState(() => localStorage.getItem(THEME_STORAGE_KEY) || "light");
   const toastTimer = useRef(null);
 
   const activeWine = wines.find((wine) => wine.id === activeWineId) || wines[0];
   const cellarSequence = useMemo(() => cellarOrderedWines(wines), [wines]);
+
+  useEffect(() => {
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
+  }, [theme]);
   const stats = useMemo(() => {
     const bottles = wines.reduce((sum, wine) => sum + Number(wine.quantity || 0), 0);
     const value = wines.reduce((sum, wine) => sum + averagePrice(wine) * Number(wine.quantity || 0), 0);
@@ -814,8 +819,8 @@ function Dashboard({ stats, wines, openWine, setView, openTool }) {
 
       <Section title="Cellar Split" icon={<ClipboardList size={18} />}>
         <div className="cellar-summary-grid">
-          <Metric label="Left Cellar" value={stats.cellar1} note={`Under $50 · ${stats.cellar1Bottles} bottles`} />
-          <Metric label="Right Cellar" value={stats.cellar2} note={`$50+ · ${stats.cellar2Bottles} bottles`} />
+          <Metric label="Left Cellar" value={stats.cellar1} note={`$50 and under · ${stats.cellar1Bottles} bottles`} />
+          <Metric label="Right Cellar" value={stats.cellar2} note={`Over $50 · ${stats.cellar2Bottles} bottles`} />
         </div>
       </Section>
     </div>
@@ -941,7 +946,7 @@ function Cellars({ wines, openWine }) {
         <section className="cellar-shell" key={cellar}>
           <div className="cellar-header">
             <div>
-              <p className="eyebrow">Cellar {cellar}</p>
+              <p className="eyebrow">{cellar === 1 ? "$50 and under" : "Over $50"}</p>
               <h2>{cellar === 1 ? "Left Cellar" : "Right Cellar"}</h2>
             </div>
             <span className="pill">{wines.filter((wine) => wine.cellar === cellar).length}/{CELLAR_CAPACITY} records placed</span>
@@ -958,8 +963,8 @@ function Cellars({ wines, openWine }) {
 
 function CellarRules() {
   const rules = [
-    ["Left", "Under $50", "Every bottle below $50 is assigned to the left cellar."],
-    ["Right", "$50 and above", "Every bottle at $50 or higher is assigned to the right cellar."],
+    ["Left", "$50 and under", "Bottles priced at $50 or less are assigned to the left cellar."],
+    ["Right", "Over $50", "Bottles above $50 are assigned to the right cellar."],
     ["Rows", "3 white, 3 red", "Each cellar shows three white racks on top and three red racks underneath."],
     ["Slots", "8 per rack", "Each rack row has eight bottle positions from left to right."],
     ["Order", "Low to high price", "Within each zone, bottles are sorted from lowest price to highest price."],
@@ -983,16 +988,27 @@ function Zone({ title, cellar, zone, wines, openWine }) {
   const rackType = zone === "top" ? "White" : "Red";
   const overflowWines = zoneWines.filter((wine) => Number(wine.slot || 0) > ZONE_CAPACITY[zone]);
   const overflowCount = Math.max(0, zoneWines.length - ZONE_CAPACITY[zone]);
+  const bottles = zoneWines.reduce((sum, wine) => sum + Number(wine.quantity || 0), 0);
 
   return (
     <div className="zone-card">
       <div className="zone-heading">
         <div>
           <h3>{title}</h3>
-          <p>3 racks · 8 slots each · {zoneWines.length}/{ZONE_CAPACITY[zone]} bottles{overflowCount ? ` · ${overflowCount} overflow` : ""}</p>
+          <p>3 racks · 8 slots each</p>
         </div>
         <Thermometer size={18} />
       </div>
+      <div className="rack-summary">
+        <span>{zoneWines.length}/{ZONE_CAPACITY[zone]} slots filled</span>
+        <span>{bottles} bottle{bottles === 1 ? "" : "s"}</span>
+        <span>{money(zoneWines.reduce((sum, wine) => sum + averagePrice(wine) * Number(wine.quantity || 0), 0))} value</span>
+      </div>
+      {overflowCount > 0 && (
+        <div className="overflow-warning">
+          {title} are full. {overflowCount} bottle{overflowCount === 1 ? "" : "s"} in overflow.
+        </div>
+      )}
       <div className="rack-stack">
         {COOLER_LAYOUT[zone].map((rack, rackIndex) => {
           const slotOffset = COOLER_LAYOUT[zone].slice(0, rackIndex).reduce((sum, item) => sum + item.capacity, 0);
@@ -1866,7 +1882,7 @@ function ScanDrawer({ wines, onClose, onSave }) {
           <div className="placement-preview">
             <span>Suggested placement</span>
             <strong>{placement.cellar === 1 ? "Left Cellar" : "Right Cellar"} · {getSlotMeta(placement.zone, placement.slot).slotLabel}</strong>
-            <small>{averagePrice(placement) < 50 ? "Under $50" : "$50+"}</small>
+            <small>{averagePrice(placement) <= 50 ? "$50 and under" : "Over $50"}</small>
           </div>
           <button className="save-button" type="submit" disabled={saving}>
             <Save size={18} />

@@ -50,7 +50,7 @@
     "backPhoto": "IMG_8107.jpg",
     "cellar": 2,
     "zone": "bottom",
-    "slot": 21,
+    "slot": 20,
     "status": "Ready",
     "tastingNotes": {
       "appearance": "",
@@ -117,7 +117,7 @@
     "backPhoto": "IMG_7959.jpg",
     "cellar": 2,
     "zone": "bottom",
-    "slot": 18,
+    "slot": 17,
     "status": "Ready",
     "tastingNotes": {
       "appearance": "",
@@ -143,10 +143,10 @@
     "variety": "Sangiovese",
     "category": "Red",
     "size": "750ml",
-    "quantity": 1,
+    "quantity": 3,
     "estimatedPrice": 20,
     "sourceUrl": "https://www.universalfws.com/product/p-2305-caparzo-2021-sangiovese-toscana-wine/",
-    "notes": "Added from front/back label photos. Back label barcode visible: 089419002102. Imported by Vineyard Brands. | Imported from comprehensive workbook: $15-25",
+    "notes": "Added from front/back label photos. Back label barcode visible: 089419002102. Imported by Vineyard Brands. Quantity adjusted so Caparzo Sangiovese Toscana totals 4 bottles across the two Toscana records. | Imported from comprehensive workbook: $15-25",
     "frontPhoto": "IMG_5399.jpg",
     "backPhoto": "IMG_5400.jpg",
     "cellar": 1,
@@ -219,7 +219,7 @@
     "backPhoto": "IMG_7973.jpg",
     "cellar": 2,
     "zone": "bottom",
-    "slot": 6,
+    "slot": 4,
     "status": "Hold",
     "tastingNotes": {
       "appearance": "",
@@ -300,7 +300,7 @@
     "dateAdded": "2026-05-02",
     "cellar": 2,
     "zone": "bottom",
-    "slot": 16
+    "slot": 15
   },
   {
     "id": 10,
@@ -401,7 +401,7 @@
     "dateAdded": "2026-05-02",
     "cellar": 2,
     "zone": "bottom",
-    "slot": 4
+    "slot": 2
   },
   {
     "id": 13,
@@ -488,7 +488,7 @@
     "backPhoto": "IMG_7953.jpg",
     "cellar": 2,
     "zone": "bottom",
-    "slot": 3,
+    "slot": 1,
     "status": "Ready",
     "tastingNotes": {
       "appearance": "",
@@ -556,7 +556,7 @@
     "backPhoto": "IMG_8112.jpg",
     "cellar": 2,
     "zone": "bottom",
-    "slot": 22,
+    "slot": 21,
     "status": "Ready",
     "tastingNotes": {
       "appearance": "",
@@ -669,7 +669,7 @@
     "dateAdded": "2026-05-02",
     "cellar": 2,
     "zone": "bottom",
-    "slot": 5
+    "slot": 3
   },
   {
     "id": 21,
@@ -689,7 +689,7 @@
     "backPhoto": "IMG_8089.jpg",
     "cellar": 2,
     "zone": "bottom",
-    "slot": 13,
+    "slot": 11,
     "status": "Ready",
     "tastingNotes": {
       "appearance": "",
@@ -736,7 +736,7 @@
     "dateAdded": "2026-05-02",
     "cellar": 2,
     "zone": "bottom",
-    "slot": 9
+    "slot": 7
   },
   {
     "id": 23,
@@ -769,7 +769,7 @@
     "dateAdded": "2026-05-02",
     "cellar": 2,
     "zone": "bottom",
-    "slot": 10
+    "slot": 8
   },
   {
     "id": 24,
@@ -800,9 +800,9 @@
     "tags": [],
     "criticRatings": [],
     "dateAdded": "2026-05-02",
-    "cellar": 2,
+    "cellar": 1,
     "zone": "bottom",
-    "slot": 1
+    "slot": 15
   },
   {
     "id": 25,
@@ -822,7 +822,7 @@
     "backPhoto": null,
     "cellar": 2,
     "zone": "bottom",
-    "slot": 11,
+    "slot": 9,
     "status": "Ready",
     "tastingNotes": {
       "appearance": "",
@@ -869,7 +869,7 @@
     "dateAdded": "2026-05-02",
     "cellar": 2,
     "zone": "bottom",
-    "slot": 14
+    "slot": 12
   },
   {
     "id": 27,
@@ -889,7 +889,7 @@
     "backPhoto": "IMG_8114.jpg",
     "cellar": 2,
     "zone": "bottom",
-    "slot": 20,
+    "slot": 19,
     "status": "Ready",
     "tastingNotes": {
       "appearance": "",
@@ -1004,7 +1004,7 @@
     "dateAdded": "2026-05-02",
     "cellar": 2,
     "zone": "bottom",
-    "slot": 8
+    "slot": 6
   },
   {
     "id": 31,
@@ -1037,7 +1037,7 @@
     "dateAdded": "2026-05-02",
     "cellar": 2,
     "zone": "bottom",
-    "slot": 19,
+    "slot": 18,
     "acquiredNotes": "Wine Sage invoice 11757, 2026-04-17: 6 bottles at $121.99 each, $731.94 line total before tax."
   },
   {
@@ -1126,7 +1126,7 @@
     "backPhoto": "IMG_7969.jpg",
     "cellar": 2,
     "zone": "bottom",
-    "slot": 17,
+    "slot": 16,
     "status": "Ready",
     "tastingNotes": {
       "appearance": "",
@@ -1160,7 +1160,7 @@
     "backPhoto": "IMG_8116.jpg",
     "cellar": 2,
     "zone": "bottom",
-    "slot": 7,
+    "slot": 5,
     "status": "Ready",
     "tastingNotes": {
       "appearance": "",
@@ -1207,7 +1207,7 @@
     "dateAdded": "2026-05-02",
     "cellar": 2,
     "zone": "bottom",
-    "slot": 23
+    "slot": 22
   },
   {
     "id": 37,
@@ -1240,7 +1240,7 @@
     "dateAdded": "2026-05-02",
     "cellar": 2,
     "zone": "bottom",
-    "slot": 24
+    "slot": 23
   },
   {
     "id": 38,
@@ -1260,7 +1260,7 @@
     "backPhoto": "IMG_7980.jpg",
     "cellar": 2,
     "zone": "bottom",
-    "slot": 15,
+    "slot": 13,
     "status": "Ready",
     "tastingNotes": {
       "appearance": "",
@@ -1394,9 +1394,9 @@
     "notes": "Vintage visible in photo. Sale pricing can be lower than estimate. | Imported from comprehensive workbook: $40-60",
     "frontPhoto": "IMG_7978.jpg",
     "backPhoto": "IMG_7979.jpg",
-    "cellar": 2,
+    "cellar": 1,
     "zone": "bottom",
-    "slot": 2,
+    "slot": 16,
     "status": "Ready",
     "tastingNotes": {
       "appearance": "",
@@ -1430,7 +1430,7 @@
     "backPhoto": "IMG_8118.jpg",
     "cellar": 2,
     "zone": "bottom",
-    "slot": 12,
+    "slot": 10,
     "status": "Ready",
     "tastingNotes": {
       "appearance": "",
@@ -1681,6 +1681,6 @@
     "dateAdded": "2026-05-02",
     "cellar": 2,
     "zone": "bottom",
-    "slot": 25
+    "slot": 14
   }
 ]
