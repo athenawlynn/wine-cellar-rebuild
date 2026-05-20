@@ -97,7 +97,7 @@
     "dateAdded": "2026-05-02",
     "cellar": 1,
     "zone": "bottom",
-    "slot": 11
+    "slot": 12
   },
   {
     "id": 4,
@@ -320,7 +320,7 @@
     "backPhoto": "IMG_7983.jpg",
     "cellar": 1,
     "zone": "bottom",
-    "slot": 9,
+    "slot": 10,
     "status": "Ready",
     "tastingNotes": {
       "appearance": "",
@@ -454,7 +454,7 @@
     "backPhoto": "IMG_7961.jpg",
     "cellar": 1,
     "zone": "bottom",
-    "slot": 12,
+    "slot": 13,
     "status": "Ready",
     "tastingNotes": {
       "appearance": "",
@@ -802,7 +802,7 @@
     "dateAdded": "2026-05-02",
     "cellar": 1,
     "zone": "bottom",
-    "slot": 15
+    "slot": 16
   },
   {
     "id": 25,
@@ -923,7 +923,7 @@
     "backPhoto": "IMG_8091.jpg",
     "cellar": 1,
     "zone": "bottom",
-    "slot": 14,
+    "slot": 15,
     "status": "Ready",
     "tastingNotes": {
       "appearance": "",
@@ -1328,7 +1328,7 @@
     "backPhoto": "IMG_7957.jpg",
     "cellar": 1,
     "zone": "bottom",
-    "slot": 13,
+    "slot": 14,
     "status": "Ready",
     "tastingNotes": {
       "appearance": "",
@@ -1362,7 +1362,7 @@
     "backPhoto": "IMG_7979.jpg",
     "cellar": 1,
     "zone": "bottom",
-    "slot": 16,
+    "slot": 17,
     "status": "Ready",
     "tastingNotes": {
       "appearance": "",
@@ -1599,7 +1599,7 @@
     "backPhoto": "IMG_8100.jpg",
     "cellar": 1,
     "zone": "bottom",
-    "slot": 10,
+    "slot": 11,
     "status": "Ready",
     "tastingNotes": {
       "appearance": "",
@@ -1648,5 +1648,46 @@
     "cellar": 2,
     "zone": "fullRed",
     "slot": 14
+  },
+  {
+    "id": 51,
+    "producer": "Quilt / Copper Cane Wines & Provisions",
+    "wineName": "The Fabric of the Land Napa Valley Red Wine",
+    "vintage": 2023,
+    "region": "Napa Valley, California",
+    "country": "United States",
+    "appellation": "Napa Valley",
+    "variety": "Red Blend",
+    "category": "Red",
+    "size": "750ml",
+    "quantity": 1,
+    "alcohol": "14.8%",
+    "estimatedPrice": 35,
+    "averagePrice": 35,
+    "priceEstimate": "$35",
+    "sourceUrl": "",
+    "notes": "Rich, smooth, plush Napa red blend. Tasting notes: plum, blackberry, cherry, chocolate, caramel, firm acidity, subtle tannins. Food pairing: short ribs, steak, burgers, roasted chicken.",
+    "vineyardNotes": "Produced by Quilt Wines / Copper Cane Wines & Provisions. Napa Valley red wine from Joseph Wagner.",
+    "tastingNotes": {
+      "appearance": "",
+      "nose": "Plum, blackberry, cherry, chocolate, and caramel.",
+      "palate": "Rich, smooth, plush Napa red blend with firm acidity and subtle tannins.",
+      "finish": "Chocolate, caramel, and dark fruit carry through the finish."
+    },
+    "frontPhoto": "IMG_5825.jpg",
+    "backPhoto": "IMG_5826.jpg",
+    "status": "Drink now / short-term hold",
+    "drinkWindow": "2026-2029",
+    "tags": [
+      "Napa",
+      "Red Blend",
+      "Joseph Wagner",
+      "Copper Cane"
+    ],
+    "criticRatings": [],
+    "dateAdded": "2026-05-20",
+    "cellar": 1,
+    "zone": "bottom",
+    "slot": 9
   }
 ]
