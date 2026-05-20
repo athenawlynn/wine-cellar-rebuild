@@ -456,6 +456,27 @@ function wineSearchText(wine) {
     .toLowerCase();
 }
 
+function cellarSearchText(wine) {
+  const meta = getSlotMeta(wine.zone, wine.slot);
+  return [
+    wineSearchText(wine),
+    wine.cellar === 1 ? "left cellar" : "right cellar",
+    zoneLabel(wine.zone),
+    meta.slotLabel,
+    meta.shortLabel,
+    money(averagePrice(wine)),
+    String(averagePrice(wine)),
+    `${Number(wine.quantity || 0)} bottles`,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+}
+
+function matchesCellarSearch(wine, query) {
+  return !query.trim() || cellarSearchText(wine).includes(query.trim().toLowerCase());
+}
+
 function filterWines(wines, filters) {
   return wines
     .filter((wine) => {
@@ -1004,30 +1025,56 @@ function EmptyState({ title, body }) {
 }
 
 function Cellars({ wines, openWine, showPrices }) {
+  const [cellarQueries, setCellarQueries] = useState({ 1: "", 2: "" });
+
+  function setCellarQuery(cellar, value) {
+    setCellarQueries((current) => ({ ...current, [cellar]: value }));
+  }
+
   return (
     <div className="cellars-page">
       <CellarRules />
-      {[1, 2].map((cellar) => (
-        <section className="cellar-shell" key={cellar}>
-          <div className="cellar-header">
-            <div>
-              <p className="eyebrow">{cellar === 1 ? "All whites + value reds" : "$50+ reds only"}</p>
-              <h2>{cellar === 1 ? "Left Cellar" : "Right Cellar"}</h2>
+      {[1, 2].map((cellar) => {
+        const query = cellarQueries[cellar] || "";
+        const cellarWines = wines.filter((wine) => wine.cellar === cellar);
+        const cellarBottles = cellarWines.reduce((sum, wine) => sum + Number(wine.quantity || 0), 0);
+        const matchingWines = query.trim() ? cellarWines.filter((wine) => matchesCellarSearch(wine, query)) : cellarWines;
+        const matchingBottles = matchingWines.reduce((sum, wine) => sum + Number(wine.quantity || 0), 0);
+
+        return (
+          <section className="cellar-shell" key={cellar}>
+            <div className="cellar-header">
+              <div>
+                <p className="eyebrow">{cellar === 1 ? "All whites + value reds" : "$50+ reds only"}</p>
+                <h2>{cellar === 1 ? "Left Cellar" : "Right Cellar"}</h2>
+              </div>
+              <span className="pill">{cellarBottles}/{CELLAR_CAPACITY} bottle slots filled</span>
             </div>
-            <span className="pill">{wines.filter((wine) => wine.cellar === cellar).reduce((sum, wine) => sum + Number(wine.quantity || 0), 0)}/{CELLAR_CAPACITY} bottle slots filled</span>
-          </div>
-          <div className="cellar-layout">
-            {cellar === 1 ? (
-              <>
-                <Zone title="White Racks" cellar={cellar} zone="top" wines={wines} openWine={openWine} showPrices={showPrices} />
-                <Zone title="Red Racks Under $50" cellar={cellar} zone="bottom" wines={wines} openWine={openWine} showPrices={showPrices} />
-              </>
-            ) : (
-              <Zone title="Red Racks $50+" cellar={cellar} zone="fullRed" wines={wines} openWine={openWine} showPrices={showPrices} />
-            )}
-          </div>
-        </section>
-      ))}
+            <div className="cellar-search-panel">
+              <div className="cellar-search-field">
+                <Search size={18} />
+                <input
+                  value={query}
+                  onChange={(event) => setCellarQuery(cellar, event.target.value)}
+                  placeholder={`Search ${cellar === 1 ? "left" : "right"} cellar`}
+                />
+                {query && <button type="button" onClick={() => setCellarQuery(cellar, "")} title="Clear search"><X size={16} /></button>}
+              </div>
+              <span>{query.trim() ? `${matchingBottles} of ${cellarBottles} bottles matched` : "Search by wine, region, price, rack, or slot"}</span>
+            </div>
+            <div className="cellar-layout">
+              {cellar === 1 ? (
+                <>
+                  <Zone title="White Racks" cellar={cellar} zone="top" wines={wines} openWine={openWine} showPrices={showPrices} searchQuery={query} />
+                  <Zone title="Red Racks Under $50" cellar={cellar} zone="bottom" wines={wines} openWine={openWine} showPrices={showPrices} searchQuery={query} />
+                </>
+              ) : (
+                <Zone title="Red Racks $50+" cellar={cellar} zone="fullRed" wines={wines} openWine={openWine} showPrices={showPrices} searchQuery={query} />
+              )}
+            </div>
+          </section>
+        );
+      })}
     </div>
   );
 }
@@ -1054,7 +1101,7 @@ function CellarRules() {
   );
 }
 
-function Zone({ title, cellar, zone, wines, openWine, showPrices }) {
+function Zone({ title, cellar, zone, wines, openWine, showPrices, searchQuery = "" }) {
   const zoneWines = wines.filter((wine) => wine.cellar === cellar && wine.zone === zone);
   const bottleSlots = bottleSlotsForWines(zoneWines);
   const rackType = zone === "top" ? "White" : "Red";
@@ -1063,6 +1110,8 @@ function Zone({ title, cellar, zone, wines, openWine, showPrices }) {
   const overflowBottles = bottleSlots.filter((item) => item.slot > capacity);
   const overflowCount = Math.max(0, bottleSlots.length - capacity);
   const bottles = zoneWines.reduce((sum, wine) => sum + Number(wine.quantity || 0), 0);
+  const hasSearch = Boolean(searchQuery.trim());
+  const matchedBottles = hasSearch ? bottleSlots.filter((item) => matchesCellarSearch(item.wine, searchQuery)).length : bottles;
 
   return (
     <div className="zone-card">
@@ -1076,6 +1125,7 @@ function Zone({ title, cellar, zone, wines, openWine, showPrices }) {
       <div className="rack-summary">
         <span>{Math.min(bottleSlots.length, capacity)}/{capacity} slots filled</span>
         <span>{bottles} bottle{bottles === 1 ? "" : "s"}</span>
+        {hasSearch && <span>{matchedBottles} match{matchedBottles === 1 ? "" : "es"}</span>}
         <span>{money(zoneWines.reduce((sum, wine) => sum + averagePrice(wine) * Number(wine.quantity || 0), 0))} value</span>
       </div>
       {overflowCount > 0 && (
@@ -1098,10 +1148,11 @@ function Zone({ title, cellar, zone, wines, openWine, showPrices }) {
                   const bottle = bottleSlots.find((item) => item.slot === slot);
                   const wine = bottle?.wine;
                   const meta = getSlotMeta(zone, slot);
+                  const isSearchMatch = wine && matchesCellarSearch(wine, searchQuery);
                   return (
                     <button
                       key={slot}
-                      className={`slot ${wine ? "filled" : ""}`}
+                      className={`slot ${wine ? "filled" : ""} ${hasSearch && wine ? (isSearchMatch ? "search-match" : "search-muted") : ""}`}
                       onClick={() => wine && openWine(wine.id)}
                       title={wine ? wineTitle(wine) : "Empty slot"}
                     >
