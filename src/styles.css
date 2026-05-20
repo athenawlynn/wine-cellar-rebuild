@@ -924,6 +924,30 @@ p {
   gap: 12px;
 }
 
+.form-grid.compact {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.form-section {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-soft);
+}
+
+.form-section h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.form-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
 .region-filter-bar {
   align-items: end;
   margin-bottom: 16px;
@@ -1441,6 +1465,7 @@ video {
   .producer-grid,
   .value-grid,
   .form-grid,
+  .form-grid.compact,
   .structured-notes,
   .bottle-gallery {
     grid-template-columns: 1fr;

@@ -72,10 +72,20 @@ const COOLER_LAYOUT = {
   ],
 };
 
+const FULL_RED_LAYOUT = [
+  { rack: 1, capacity: 8 },
+  { rack: 2, capacity: 8 },
+  { rack: 3, capacity: 8 },
+  { rack: 4, capacity: 8 },
+  { rack: 5, capacity: 8 },
+  { rack: 6, capacity: 8 },
+];
+
 const CELLAR_CAPACITY = [...COOLER_LAYOUT.top, ...COOLER_LAYOUT.bottom].reduce((sum, rack) => sum + rack.capacity, 0);
 const ZONE_CAPACITY = {
   top: COOLER_LAYOUT.top.reduce((sum, rack) => sum + rack.capacity, 0),
   bottom: COOLER_LAYOUT.bottom.reduce((sum, rack) => sum + rack.capacity, 0),
+  fullRed: FULL_RED_LAYOUT.reduce((sum, rack) => sum + rack.capacity, 0),
 };
 const TOP_ZONE_CATEGORIES = ["White", "Sparkling", "Dessert", "Rose", "Rosé", "Rosé"];
 
@@ -232,12 +242,18 @@ function inferDrinkWindow(wine) {
   return `${wine.vintage + 1}-${wine.vintage + 7}`;
 }
 
+function isWhiteZoneWine(wine) {
+  return TOP_ZONE_CATEGORIES.includes(wine.category);
+}
+
 function cellarForWine(wine) {
+  if (isWhiteZoneWine(wine)) return 1;
   return averagePrice(wine) <= 50 ? 1 : 2;
 }
 
-function zoneForWine(wine) {
-  return TOP_ZONE_CATEGORIES.includes(wine.category) ? "top" : "bottom";
+function zoneForWine(wine, cellar = cellarForWine(wine)) {
+  if (isWhiteZoneWine(wine)) return "top";
+  return cellar === 2 ? "fullRed" : "bottom";
 }
 
 function averagePrice(wine) {
@@ -285,7 +301,7 @@ function applyCellarPlacement(wines) {
   for (const rawWine of wines) {
     const wine = normalizeWine(rawWine);
     const cellar = cellarForWine(wine);
-    const zone = zoneForWine(wine);
+    const zone = zoneForWine(wine, cellar);
     const key = `${cellar}-${zone}`;
     grouped.set(key, [...(grouped.get(key) || []), { ...wine, cellar, zone }]);
   }
@@ -347,14 +363,23 @@ function saveStoredList(key, list) {
 }
 
 function zoneLabel(zone) {
+  if (zone === "fullRed") return "Red racks";
   return zone === "top" ? "White racks" : "Red racks";
+}
+
+function racksForZone(zone) {
+  return zone === "fullRed" ? FULL_RED_LAYOUT : (COOLER_LAYOUT[zone] || []);
+}
+
+function zoneCapacity(zone) {
+  return ZONE_CAPACITY[zone] || 0;
 }
 
 function getSlotMeta(zone, slot) {
   let remaining = slot;
   const prefix = zone === "top" ? "W" : "R";
   const rackType = zone === "top" ? "White" : "Red";
-  for (const rack of COOLER_LAYOUT[zone]) {
+  for (const rack of racksForZone(zone)) {
     if (remaining <= rack.capacity) {
       return {
         rack: rack.rack,
@@ -367,7 +392,7 @@ function getSlotMeta(zone, slot) {
     }
     remaining -= rack.capacity;
   }
-  return { rack: null, position: slot, capacity: ZONE_CAPACITY[zone], label: "Overflow", slotLabel: "Overflow", shortLabel: `${prefix}+${slot}` };
+  return { rack: null, position: slot, capacity: zoneCapacity(zone), label: "Overflow", slotLabel: "Overflow", shortLabel: `${prefix}+${slot}` };
 }
 
 function suggestPlacement(wines, draft) {
@@ -976,14 +1001,20 @@ function Cellars({ wines, openWine, showPrices }) {
         <section className="cellar-shell" key={cellar}>
           <div className="cellar-header">
             <div>
-              <p className="eyebrow">{cellar === 1 ? "$50 and under" : "Over $50"}</p>
+              <p className="eyebrow">{cellar === 1 ? "All whites + value reds" : "$50+ reds only"}</p>
               <h2>{cellar === 1 ? "Left Cellar" : "Right Cellar"}</h2>
             </div>
             <span className="pill">{wines.filter((wine) => wine.cellar === cellar).reduce((sum, wine) => sum + Number(wine.quantity || 0), 0)}/{CELLAR_CAPACITY} bottle slots filled</span>
           </div>
           <div className="cellar-layout">
-            <Zone title="White Racks" cellar={cellar} zone="top" wines={wines} openWine={openWine} showPrices={showPrices} />
-            <Zone title="Red Racks" cellar={cellar} zone="bottom" wines={wines} openWine={openWine} showPrices={showPrices} />
+            {cellar === 1 ? (
+              <>
+                <Zone title="White Racks" cellar={cellar} zone="top" wines={wines} openWine={openWine} showPrices={showPrices} />
+                <Zone title="Red Racks Under $50" cellar={cellar} zone="bottom" wines={wines} openWine={openWine} showPrices={showPrices} />
+              </>
+            ) : (
+              <Zone title="Red Racks $50+" cellar={cellar} zone="fullRed" wines={wines} openWine={openWine} showPrices={showPrices} />
+            )}
           </div>
         </section>
       ))}
@@ -993,9 +1024,9 @@ function Cellars({ wines, openWine, showPrices }) {
 
 function CellarRules() {
   const rules = [
-    ["Left", "$50 and under", "Bottles priced at $50 or less are assigned to the left cellar."],
-    ["Right", "Over $50", "Bottles above $50 are assigned to the right cellar."],
-    ["Rows", "3 white, 3 red", "Each cellar shows three white racks on top and three red racks underneath."],
+    ["Left", "All whites", "White, sparkling, rosé, and dessert bottles live in the left cellar."],
+    ["Value reds", "$50 and under", "Reds priced at $50 or less stay in the left cellar under the whites."],
+    ["Right", "$50+ reds", "The right cellar is now six racks of red wine priced above $50."],
     ["Slots", "8 per rack", "Each rack row has eight bottle positions from left to right."],
     ["Order", "Low to high price", "Within each zone, bottles are sorted from lowest price to highest price."],
     ["Preview", "Hover any slot", "Hover a filled slot to see the label, value, varietal, rack, and position."],
@@ -1017,8 +1048,10 @@ function Zone({ title, cellar, zone, wines, openWine, showPrices }) {
   const zoneWines = wines.filter((wine) => wine.cellar === cellar && wine.zone === zone);
   const bottleSlots = bottleSlotsForWines(zoneWines);
   const rackType = zone === "top" ? "White" : "Red";
-  const overflowBottles = bottleSlots.filter((item) => item.slot > ZONE_CAPACITY[zone]);
-  const overflowCount = Math.max(0, bottleSlots.length - ZONE_CAPACITY[zone]);
+  const racks = racksForZone(zone);
+  const capacity = zoneCapacity(zone);
+  const overflowBottles = bottleSlots.filter((item) => item.slot > capacity);
+  const overflowCount = Math.max(0, bottleSlots.length - capacity);
   const bottles = zoneWines.reduce((sum, wine) => sum + Number(wine.quantity || 0), 0);
 
   return (
@@ -1026,12 +1059,12 @@ function Zone({ title, cellar, zone, wines, openWine, showPrices }) {
       <div className="zone-heading">
         <div>
           <h3>{title}</h3>
-          <p>3 racks · 8 slots each</p>
+          <p>{racks.length} racks · 8 slots each</p>
         </div>
         <Thermometer size={18} />
       </div>
       <div className="rack-summary">
-        <span>{Math.min(bottleSlots.length, ZONE_CAPACITY[zone])}/{ZONE_CAPACITY[zone]} slots filled</span>
+        <span>{Math.min(bottleSlots.length, capacity)}/{capacity} slots filled</span>
         <span>{bottles} bottle{bottles === 1 ? "" : "s"}</span>
         <span>{money(zoneWines.reduce((sum, wine) => sum + averagePrice(wine) * Number(wine.quantity || 0), 0))} value</span>
       </div>
@@ -1041,8 +1074,8 @@ function Zone({ title, cellar, zone, wines, openWine, showPrices }) {
         </div>
       )}
       <div className="rack-stack">
-        {COOLER_LAYOUT[zone].map((rack, rackIndex) => {
-          const slotOffset = COOLER_LAYOUT[zone].slice(0, rackIndex).reduce((sum, item) => sum + item.capacity, 0);
+        {racks.map((rack, rackIndex) => {
+          const slotOffset = racks.slice(0, rackIndex).reduce((sum, item) => sum + item.capacity, 0);
           return (
             <div className="rack-row" key={`${zone}-${rack.rack}`}>
               <div className="rack-label">
@@ -1713,16 +1746,28 @@ function formFromWine(wine) {
     country: wine.country || "",
     variety: wine.variety || "",
     category: wine.category || "Red",
+    size: wine.size || "750ml",
+    status: wine.status || "Ready",
+    dateAdded: wine.dateAdded || "",
     estimatedPrice: averagePrice(wine),
+    priceEstimate: wine.priceEstimate || "",
     quantity: wine.quantity || 1,
+    frontPhoto: wine.frontPhoto || "",
+    backPhoto: wine.backPhoto || "",
+    sourceUrl: wine.sourceUrl || "",
     notes: wine.notes || "",
+    vineyardNotes: wine.vineyardNotes || "",
     acquiredNotes: wine.acquiredNotes || "",
     rating: wine.rating || 0,
     tags: (wine.tags || []).join(", "),
+    criticRatings: criticRatingsToText(wine.criticRatings || []),
     appearance: wine.tastingNotes?.appearance || "",
     nose: wine.tastingNotes?.nose || "",
     palate: wine.tastingNotes?.palate || "",
     finish: wine.tastingNotes?.finish || "",
+    cellar: wine.cellar || "",
+    zone: wine.zone || "",
+    slot: wine.slot || "",
   };
 }
 
@@ -1735,13 +1780,22 @@ function wineFromForm(draft) {
     country: draft.country,
     variety: draft.variety,
     category: draft.category,
+    size: draft.size || "750ml",
+    status: draft.status || "Ready",
+    dateAdded: draft.dateAdded,
     estimatedPrice: Number(draft.estimatedPrice || 0),
     averagePrice: Number(draft.estimatedPrice || 0),
+    priceEstimate: draft.priceEstimate,
     quantity: Number(draft.quantity || 1),
+    frontPhoto: draft.frontPhoto,
+    backPhoto: draft.backPhoto,
+    sourceUrl: draft.sourceUrl,
     notes: draft.notes,
+    vineyardNotes: draft.vineyardNotes,
     acquiredNotes: draft.acquiredNotes,
     rating: Number(draft.rating || 0),
     tags: String(draft.tags || "").split(",").map((tag) => tag.trim()).filter(Boolean),
+    criticRatings: parseCriticRatings(draft.criticRatings),
     tastingNotes: {
       appearance: draft.appearance,
       nose: draft.nose,
@@ -1749,6 +1803,33 @@ function wineFromForm(draft) {
       finish: draft.finish,
     },
   };
+}
+
+function criticRatingsToText(ratings) {
+  return (ratings || []).map((rating) => {
+    if (typeof rating === "string") return rating;
+    return [rating.source, rating.score].filter(Boolean).join(": ");
+  }).filter(Boolean).join("\n");
+}
+
+function parseCriticRatings(value) {
+  const text = String(value || "").trim();
+  if (!text) return [];
+  if (text.startsWith("[")) {
+    try {
+      const parsed = JSON.parse(text);
+      if (Array.isArray(parsed)) return parsed;
+    } catch {
+      return [];
+    }
+  }
+  return text.split(/\n+/).map((line) => {
+    const [source, ...scoreParts] = line.split(":");
+    return {
+      source: source.trim(),
+      score: scoreParts.join(":").trim(),
+    };
+  }).filter((rating) => rating.source || rating.score);
 }
 
 function WineForm({ draft, setDraft, includeNotes = false }) {
@@ -1767,26 +1848,54 @@ function WineForm({ draft, setDraft, includeNotes = false }) {
 
   return (
     <div className="form-grid">
-      <label>Producer<input value={draft.producer} onChange={(event) => setField("producer", event.target.value)} /></label>
-      <label>Wine Name<input value={draft.wineName} onChange={(event) => setField("wineName", event.target.value)} /></label>
-      <label>Vintage<input inputMode="numeric" value={draft.vintage} onChange={(event) => setField("vintage", event.target.value)} /></label>
-      <label>Region<input value={draft.region} list="region-presets" onChange={(event) => setRegion(event.target.value)} /></label>
-      <label>Country<select value={draft.country} onChange={(event) => setField("country", event.target.value)}>
-        <option value="">Country pending</option>
-        {Array.from(new Set(regionPresets.map((item) => item.country))).sort().map((country) => <option key={country}>{country}</option>)}
-      </select></label>
-      <label>Varietal<input value={draft.variety} onChange={(event) => setField("variety", event.target.value)} /></label>
-      <label>Type<select value={draft.category} onChange={(event) => setField("category", event.target.value)}>
-        {["Red", "White", "Sparkling", "Rose", "Dessert"].map((item) => <option key={item}>{item}</option>)}
-      </select></label>
-      <label>Average Price<input inputMode="decimal" value={draft.estimatedPrice} onChange={(event) => setField("estimatedPrice", event.target.value)} /></label>
-      <label>Quantity<input inputMode="numeric" value={draft.quantity} onChange={(event) => setField("quantity", event.target.value)} /></label>
+      <div className="form-section wide">
+        <h3>Identity</h3>
+        <div className="form-grid compact">
+          <label>Producer<input value={draft.producer} onChange={(event) => setField("producer", event.target.value)} /></label>
+          <label>Wine Name<input value={draft.wineName} onChange={(event) => setField("wineName", event.target.value)} /></label>
+          <label>Vintage<input inputMode="numeric" value={draft.vintage} onChange={(event) => setField("vintage", event.target.value)} /></label>
+          <label>Varietal<input value={draft.variety} onChange={(event) => setField("variety", event.target.value)} /></label>
+          <label>Type<select value={draft.category} onChange={(event) => setField("category", event.target.value)}>
+            {["Red", "White", "Sparkling", "Rose", "Dessert"].map((item) => <option key={item}>{item}</option>)}
+          </select></label>
+          <label>Size<input value={draft.size} onChange={(event) => setField("size", event.target.value)} /></label>
+        </div>
+      </div>
+      <div className="form-section wide">
+        <h3>Region & Value</h3>
+        <div className="form-grid compact">
+          <label>Region<input value={draft.region} list="region-presets" onChange={(event) => setRegion(event.target.value)} /></label>
+          <label>Country<select value={draft.country} onChange={(event) => setField("country", event.target.value)}>
+            <option value="">Country pending</option>
+            {Array.from(new Set(regionPresets.map((item) => item.country))).sort().map((country) => <option key={country}>{country}</option>)}
+          </select></label>
+          <label>Average Price<input inputMode="decimal" value={draft.estimatedPrice} onChange={(event) => setField("estimatedPrice", event.target.value)} /></label>
+          <label>Price Range / Estimate<input value={draft.priceEstimate} onChange={(event) => setField("priceEstimate", event.target.value)} placeholder="$20-35" /></label>
+          <label>Quantity<input inputMode="numeric" value={draft.quantity} onChange={(event) => setField("quantity", event.target.value)} /></label>
+          <label>Status<select value={draft.status} onChange={(event) => setField("status", event.target.value)}>
+            {["Ready", "Hold", "Drink Soon", "Wishlist", "Consumed"].map((item) => <option key={item}>{item}</option>)}
+          </select></label>
+        </div>
+      </div>
       {includeNotes && (
         <>
+          <div className="form-section wide">
+            <h3>Photos & Source</h3>
+            <div className="form-grid compact">
+              <label>Front Photo Filename<input value={draft.frontPhoto} onChange={(event) => setField("frontPhoto", event.target.value)} placeholder="IMG_8633.jpg" /></label>
+              <label>Back Photo Filename<input value={draft.backPhoto} onChange={(event) => setField("backPhoto", event.target.value)} placeholder="IMG_8634.jpg" /></label>
+              <label className="wide">Source URL<input value={draft.sourceUrl} onChange={(event) => setField("sourceUrl", event.target.value)} placeholder="https://..." /></label>
+              <label>Date Added<input type="date" value={draft.dateAdded} onChange={(event) => setField("dateAdded", event.target.value)} /></label>
+              <label>Automatic Location<input value={`${draft.cellar === 1 ? "Left Cellar" : "Right Cellar"} · ${getSlotMeta(draft.zone, draft.slot).slotLabel}`} disabled /></label>
+            </div>
+            <p className="form-note">Location is recalculated from price and wine type when you save.</p>
+          </div>
           <label className="wide">How Acquired<textarea value={draft.acquiredNotes} onChange={(event) => setField("acquiredNotes", event.target.value)} /></label>
+          <label className="wide">Vineyard / Producer Notes<textarea value={draft.vineyardNotes} onChange={(event) => setField("vineyardNotes", event.target.value)} /></label>
           <label className="wide">Bottle Notes<textarea value={draft.notes} onChange={(event) => setField("notes", event.target.value)} /></label>
           <label>Rating<StarRating rating={draft.rating} onChange={(value) => setField("rating", value)} /></label>
           <label>Tags<input value={draft.tags} onChange={(event) => setField("tags", event.target.value)} placeholder="Thanksgiving, Steak pairing" /></label>
+          <label className="wide">Critic Ratings<textarea value={draft.criticRatings} onChange={(event) => setField("criticRatings", event.target.value)} placeholder="Wine Spectator: 94&#10;Robert Parker: 93" /></label>
           <label>Appearance<textarea value={draft.appearance} onChange={(event) => setField("appearance", event.target.value)} /></label>
           <label>Nose<textarea value={draft.nose} onChange={(event) => setField("nose", event.target.value)} /></label>
           <label>Palate<textarea value={draft.palate} onChange={(event) => setField("palate", event.target.value)} /></label>
