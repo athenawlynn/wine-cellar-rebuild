@@ -485,7 +485,7 @@ function App() {
   const [events, setEvents] = useState(() => loadStoredList(EVENT_STORAGE_KEY, defaultEvents));
   const [scanOpen, setScanOpen] = useState(false);
   const [toast, setToast] = useState("");
-  const [theme, setTheme] = useState("dark");
+  const [theme, setTheme] = useState("light");
   const toastTimer = useRef(null);
 
   const activeWine = wines.find((wine) => wine.id === activeWineId) || wines[0];
