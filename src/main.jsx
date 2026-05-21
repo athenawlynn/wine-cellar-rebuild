@@ -353,15 +353,38 @@ function cellarBottleRecords(wines) {
     grouped.set(key, [...(grouped.get(key) || []), record]);
   }
 
-  return Array.from(grouped.values()).flatMap((group) =>
-    group
+  return Array.from(grouped.values()).flatMap((group) => {
+    const placed = [];
+    const usedSlots = new Set();
+    const claimSlot = (preferredSlot) => {
+      let slot = Math.max(1, Math.floor(Number(preferredSlot) || 1));
+      while (usedSlots.has(slot)) slot += 1;
+      usedSlots.add(slot);
+      return slot;
+    };
+    const manuallyPlaced = group
+      .filter((record) => record.placementPriority !== null)
       .sort((a, b) => (
-        (a.placementPriority ?? Number(a.wine.slot || Number.MAX_SAFE_INTEGER)) - (b.placementPriority ?? Number(b.wine.slot || Number.MAX_SAFE_INTEGER)) ||
+        Number(a.placementPriority) - Number(b.placementPriority) ||
         placementSort(a.wine, b.wine) ||
         a.bottleNumber - b.bottleNumber
-      ))
-      .map((record, index) => ({ ...record, slot: index + 1 })),
-  );
+      ));
+    const autoPlaced = group
+      .filter((record) => record.placementPriority === null)
+      .sort((a, b) => placementSort(a.wine, b.wine) || a.bottleNumber - b.bottleNumber);
+
+    for (const record of manuallyPlaced) {
+      placed.push({ ...record, slot: claimSlot(record.placementPriority) });
+    }
+
+    let nextAutoSlot = 1;
+    for (const record of autoPlaced) {
+      while (usedSlots.has(nextAutoSlot)) nextAutoSlot += 1;
+      placed.push({ ...record, slot: claimSlot(nextAutoSlot) });
+    }
+
+    return placed.sort((a, b) => a.slot - b.slot);
+  });
 }
 
 function applyCellarPlacement(wines) {
@@ -396,14 +419,14 @@ function applyBottlePlacementRecords(wines, records) {
 
   const placementsByWine = new Map();
   for (const group of grouped.values()) {
-    group.forEach((record, index) => {
+    group.forEach((record) => {
       placementsByWine.set(record.wineId, [
         ...(placementsByWine.get(record.wineId) || []),
         {
           bottleNumber: record.bottleNumber,
           cellarOverride: record.cellar,
           zoneOverride: record.zone,
-          placementPriority: index + 1,
+          placementPriority: Number(record.slot || record.placementPriority || 1),
         },
       ]);
     });
@@ -428,40 +451,18 @@ function reorderBottlePlacement(wines, sourceInstanceId, target) {
   if (!source) return wines;
   const targetRecord = target.targetInstanceId ? records.find((record) => record.instanceId === target.targetInstanceId) : null;
   if (targetRecord?.instanceId === source.instanceId) return wines;
+  const targetSlot = Math.max(1, Number(target.slot || 1));
+  const nextRecords = records.map((record) => {
+    if (record.instanceId === source.instanceId) {
+      return { ...record, cellar: target.cellar, zone: target.zone, slot: targetSlot, placementPriority: targetSlot };
+    }
+    if (targetRecord && record.instanceId === targetRecord.instanceId) {
+      return { ...record, cellar: source.cellar, zone: source.zone, slot: source.slot, placementPriority: source.slot };
+    }
+    return record;
+  });
 
-  const sourceKey = `${source.cellar}-${source.zone}`;
-  const targetKey = `${target.cellar}-${target.zone}`;
-  const grouped = new Map();
-
-  for (const record of records) {
-    const key = `${record.cellar}-${record.zone}`;
-    grouped.set(key, [...(grouped.get(key) || []), { ...record }]);
-  }
-
-  const removeFromGroup = (key, instanceId) => {
-    const group = grouped.get(key) || [];
-    const index = group.findIndex((record) => record.instanceId === instanceId);
-    if (index >= 0) group.splice(index, 1);
-    grouped.set(key, group);
-    return Math.max(0, index);
-  };
-  const insertIntoGroup = (key, record, index) => {
-    const group = grouped.get(key) || [];
-    group.splice(Math.max(0, Math.min(group.length, index)), 0, record);
-    grouped.set(key, group);
-  };
-
-  const sourceIndex = removeFromGroup(sourceKey, source.instanceId);
-
-  if (targetRecord) {
-    const targetIndex = removeFromGroup(targetKey, targetRecord.instanceId);
-    insertIntoGroup(sourceKey, { ...targetRecord, cellar: source.cellar, zone: source.zone }, sourceIndex);
-    insertIntoGroup(targetKey, { ...source, cellar: target.cellar, zone: target.zone }, targetIndex);
-  } else {
-    insertIntoGroup(targetKey, { ...source, cellar: target.cellar, zone: target.zone }, Number(target.slot || 1) - 1);
-  }
-
-  return applyBottlePlacementRecords(wines, Array.from(grouped.values()).flat());
+  return applyBottlePlacementRecords(wines, nextRecords);
 }
 
 function loadWines() {
