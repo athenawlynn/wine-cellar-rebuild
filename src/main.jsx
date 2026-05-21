@@ -283,7 +283,7 @@ function placementSort(a, b) {
 
   if (aPriority !== null || bPriority !== null) {
     return (
-      (aPriority ?? -Infinity) - (bPriority ?? -Infinity) ||
+      (aPriority ?? Number(a.slot || Number.MAX_SAFE_INTEGER)) - (bPriority ?? Number(b.slot || Number.MAX_SAFE_INTEGER)) ||
       placementSortPrice(a) - placementSortPrice(b) ||
       String(a.producer || "").localeCompare(String(b.producer || "")) ||
       String(a.wineName || "").localeCompare(String(b.wineName || "")) ||
@@ -442,7 +442,7 @@ function loadStoredList(key, fallback) {
 }
 
 function saveWines(wines) {
-  localStorage.setItem(WINE_STORAGE_KEY, JSON.stringify(applyCellarPlacement(wines)));
+  localStorage.setItem(WINE_STORAGE_KEY, JSON.stringify(wines.map(normalizeWine)));
 }
 
 function saveArchive(archive) {
