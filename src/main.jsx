@@ -660,6 +660,36 @@ function tastingNotesList(wines) {
   ));
 }
 
+function summarizePrintGroups(groups) {
+  return groups
+    .filter((group) => group.wines.length)
+    .map((group) => {
+      const bottles = group.wines.reduce((sum, wine) => sum + Number(wine.quantity || 0), 0);
+      const value = group.wines.reduce((sum, wine) => sum + averagePrice(wine) * Number(wine.quantity || 0), 0);
+      const notable = [...group.wines].sort((a, b) => averagePrice(b) - averagePrice(a))[0];
+      return {
+        group: group.title,
+        bottles,
+        value,
+        notable: notable ? `${notable.vintage || "NV"} ${notable.producer}` : "None",
+        action: group.title === "NV" ? "Confirm vintage when possible" : bottles >= 8 ? "Monitor cellar balance" : "Maintain placement",
+      };
+    });
+}
+
+function topValueWines(wines, limit = 10) {
+  return [...wines]
+    .sort((a, b) => averagePrice(b) - averagePrice(a) || sortProducerVintage(a, b))
+    .slice(0, limit);
+}
+
+function drinkSoonWines(wines, limit = 10) {
+  return [...wines]
+    .filter((wine) => drinkWindowStatus(wine) !== "Hold")
+    .sort((a, b) => String(drinkWindowStatus(a)).localeCompare(String(drinkWindowStatus(b))) || averagePrice(b) - averagePrice(a))
+    .slice(0, limit);
+}
+
 function getCellarBookStats(wines) {
   const bottles = wines.reduce((sum, wine) => sum + Number(wine.quantity || 0), 0);
   const value = wines.reduce((sum, wine) => sum + averagePrice(wine) * Number(wine.quantity || 0), 0);
