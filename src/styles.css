@@ -355,6 +355,16 @@ p {
 .cellar-actions {
   display: flex;
   justify-content: flex-end;
+  gap: 10px;
+}
+
+.placement-hint {
+  border: 1px solid rgba(233, 191, 127, 0.48);
+  border-radius: 8px;
+  background: var(--gold-soft);
+  color: var(--text);
+  padding: 12px 14px;
+  font-weight: 700;
 }
 
 .hero-luxury {
@@ -837,6 +847,38 @@ p {
   outline-offset: 3px;
 }
 
+.slot.selected {
+  border-color: rgba(233, 191, 127, 0.95);
+  box-shadow:
+    0 0 0 3px rgba(233, 191, 127, 0.24),
+    0 14px 28px rgba(91, 23, 36, 0.18);
+}
+
+.slot.selected::after {
+  content: "Selected";
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  padding: 2px 6px;
+  border: 1px solid rgba(233, 191, 127, 0.72);
+  border-radius: 999px;
+  background: rgba(22, 11, 13, 0.76);
+  color: var(--gold);
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.slot.placement-target {
+  cursor: pointer;
+}
+
+.slot.placement-target:hover {
+  border-color: rgba(233, 191, 127, 0.82);
+  box-shadow: 0 0 0 2px rgba(233, 191, 127, 0.18);
+}
+
 .slot.drop-target {
   border-color: rgba(233, 191, 127, 0.92);
   background:
@@ -863,6 +905,10 @@ p {
 
 .theme-light .slot.drop-target::after {
   background: rgba(255, 249, 238, 0.9);
+}
+
+.theme-light .slot.selected::after {
+  background: rgba(255, 249, 238, 0.92);
 }
 
 .slot-kicker {

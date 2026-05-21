@@ -1746,6 +1746,7 @@ function PrintAppendixTable({ title, kicker, rows, showPrices }) {
 function Cellars({ wines, openWine, showPrices, moveWinePlacement, undoPlacement, canUndoPlacement }) {
   const [cellarQueries, setCellarQueries] = useState({ 1: "", 2: "" });
   const [draggingInstanceId, setDraggingInstanceId] = useState(null);
+  const [selectedInstanceId, setSelectedInstanceId] = useState(null);
   const [dropTarget, setDropTarget] = useState("");
 
   function setCellarQuery(cellar, value) {
@@ -1761,6 +1762,17 @@ function Cellars({ wines, openWine, showPrices, moveWinePlacement, undoPlacement
     moveWinePlacement(sourceId, target);
   }
 
+  function handleSlotSelect(target) {
+    if (selectedInstanceId) {
+      if (selectedInstanceId !== target.targetInstanceId) {
+        moveWinePlacement(selectedInstanceId, target);
+      }
+      setSelectedInstanceId(null);
+      return;
+    }
+    if (target.targetInstanceId) setSelectedInstanceId(target.targetInstanceId);
+  }
+
   return (
     <div className="cellars-page">
       <div className="cellar-actions">
@@ -1768,7 +1780,18 @@ function Cellars({ wines, openWine, showPrices, moveWinePlacement, undoPlacement
           <RotateCcw size={16} />
           Undo last placement
         </button>
+        {selectedInstanceId && (
+          <button className="ghost-button" type="button" onClick={() => setSelectedInstanceId(null)}>
+            <X size={16} />
+            Cancel move
+          </button>
+        )}
       </div>
+      {selectedInstanceId && (
+        <div className="placement-hint">
+          Bottle selected. Click any destination slot to move it, or click another bottle to swap.
+        </div>
+      )}
       <CellarRules />
       {[1, 2].map((cellar) => {
         const query = cellarQueries[cellar] || "";
@@ -1799,11 +1822,11 @@ function Cellars({ wines, openWine, showPrices, moveWinePlacement, undoPlacement
             <div className="cellar-layout">
               {cellar === 1 ? (
                 <>
-                  <Zone title="White Racks" cellar={cellar} zone="top" wines={wines} openWine={openWine} showPrices={showPrices} searchQuery={query} draggingInstanceId={draggingInstanceId} setDraggingInstanceId={setDraggingInstanceId} dropTarget={dropTarget} setDropTarget={setDropTarget} handleSlotDrop={handleSlotDrop} />
-                  <Zone title="Red Racks Under $50" cellar={cellar} zone="bottom" wines={wines} openWine={openWine} showPrices={showPrices} searchQuery={query} draggingInstanceId={draggingInstanceId} setDraggingInstanceId={setDraggingInstanceId} dropTarget={dropTarget} setDropTarget={setDropTarget} handleSlotDrop={handleSlotDrop} />
+                  <Zone title="White Racks" cellar={cellar} zone="top" wines={wines} openWine={openWine} showPrices={showPrices} searchQuery={query} draggingInstanceId={draggingInstanceId} selectedInstanceId={selectedInstanceId} setDraggingInstanceId={setDraggingInstanceId} setSelectedInstanceId={setSelectedInstanceId} dropTarget={dropTarget} setDropTarget={setDropTarget} handleSlotDrop={handleSlotDrop} handleSlotSelect={handleSlotSelect} />
+                  <Zone title="Red Racks Under $50" cellar={cellar} zone="bottom" wines={wines} openWine={openWine} showPrices={showPrices} searchQuery={query} draggingInstanceId={draggingInstanceId} selectedInstanceId={selectedInstanceId} setDraggingInstanceId={setDraggingInstanceId} setSelectedInstanceId={setSelectedInstanceId} dropTarget={dropTarget} setDropTarget={setDropTarget} handleSlotDrop={handleSlotDrop} handleSlotSelect={handleSlotSelect} />
                 </>
               ) : (
-                <Zone title="Red Racks $50+" cellar={cellar} zone="fullRed" wines={wines} openWine={openWine} showPrices={showPrices} searchQuery={query} draggingInstanceId={draggingInstanceId} setDraggingInstanceId={setDraggingInstanceId} dropTarget={dropTarget} setDropTarget={setDropTarget} handleSlotDrop={handleSlotDrop} />
+                <Zone title="Red Racks $50+" cellar={cellar} zone="fullRed" wines={wines} openWine={openWine} showPrices={showPrices} searchQuery={query} draggingInstanceId={draggingInstanceId} selectedInstanceId={selectedInstanceId} setDraggingInstanceId={setDraggingInstanceId} setSelectedInstanceId={setSelectedInstanceId} dropTarget={dropTarget} setDropTarget={setDropTarget} handleSlotDrop={handleSlotDrop} handleSlotSelect={handleSlotSelect} />
               )}
             </div>
           </section>
@@ -1820,7 +1843,7 @@ function CellarRules() {
     ["Right", "$50+ reds", "The right cellar is now six racks of red wine priced above $50."],
     ["Slots", "8 per rack", "Each rack row has eight bottle positions from left to right."],
     ["Order", "Low to high price", "Within each zone, bottles are sorted from lowest price to highest price."],
-    ["Move", "Drag/drop slots", "Drag a filled slot to an empty slot to move it, or onto another bottle to swap."],
+    ["Move", "Click or drag", "Click a filled slot to pick it up, then click any destination slot to move or swap."],
   ];
   return (
     <section className="rule-band">
@@ -1835,7 +1858,7 @@ function CellarRules() {
   );
 }
 
-function Zone({ title, cellar, zone, wines, openWine, showPrices, searchQuery = "", draggingInstanceId, setDraggingInstanceId, dropTarget, setDropTarget, handleSlotDrop }) {
+function Zone({ title, cellar, zone, wines, openWine, showPrices, searchQuery = "", draggingInstanceId, selectedInstanceId, setDraggingInstanceId, setSelectedInstanceId, dropTarget, setDropTarget, handleSlotDrop, handleSlotSelect }) {
   const bottleSlots = cellarBottleRecords(wines).filter((record) => record.cellar === cellar && record.zone === zone);
   const zoneWines = wines.filter((wine) => bottleSlots.some((bottle) => bottle.wineId === wine.id));
   const rackType = zone === "top" ? "White" : "Red";
@@ -1887,7 +1910,7 @@ function Zone({ title, cellar, zone, wines, openWine, showPrices, searchQuery = 
                   return (
                     <button
                       key={slot}
-                      className={`slot ${wine ? "filled" : ""} ${draggingInstanceId && bottle?.instanceId === draggingInstanceId ? "dragging" : ""} ${dropTarget === dropKey ? "drop-target" : ""} ${hasSearch && wine ? (isSearchMatch ? "search-match" : "search-muted") : ""}`}
+                      className={`slot ${wine ? "filled" : ""} ${selectedInstanceId && bottle?.instanceId === selectedInstanceId ? "selected" : ""} ${selectedInstanceId && bottle?.instanceId !== selectedInstanceId ? "placement-target" : ""} ${draggingInstanceId && bottle?.instanceId === draggingInstanceId ? "dragging" : ""} ${dropTarget === dropKey ? "drop-target" : ""} ${hasSearch && wine ? (isSearchMatch ? "search-match" : "search-muted") : ""}`}
                       draggable={Boolean(wine)}
                       onDragStart={(event) => {
                         if (!wine) return;
@@ -1909,8 +1932,9 @@ function Zone({ title, cellar, zone, wines, openWine, showPrices, searchQuery = 
                         if (dropTarget === dropKey) setDropTarget("");
                       }}
                       onDrop={(event) => handleSlotDrop(event, { cellar, zone, slot, targetInstanceId: bottle?.instanceId })}
-                      onClick={() => wine && openWine(wine.id)}
-                      title={wine ? wineTitle(wine) : "Empty slot"}
+                      onClick={() => handleSlotSelect({ cellar, zone, slot, targetInstanceId: bottle?.instanceId })}
+                      onDoubleClick={() => wine && openWine(wine.id)}
+                      title={wine ? `${wineTitle(wine)}. Click to move, double-click for details.` : "Empty slot"}
                     >
                       <span className="slot-kicker">
                         <span className="slot-number">{meta.position}</span>
