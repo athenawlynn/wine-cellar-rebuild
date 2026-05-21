@@ -257,6 +257,8 @@ function cellarForWine(wine) {
 }
 
 function zoneForWine(wine, cellar = cellarForWine(wine)) {
+  const zoneOverride = wine.zoneOverride;
+  if (["top", "bottom", "fullRed"].includes(zoneOverride)) return zoneOverride;
   if (isWhiteZoneWine(wine)) return "top";
   return cellar === 2 ? "fullRed" : "bottom";
 }
@@ -345,6 +347,68 @@ function applyCellarPlacement(wines) {
         })),
     )
     .sort((a, b) => Number(a.id || 0) - Number(b.id || 0));
+}
+
+function placementGroupKey(wine) {
+  return `${wine.cellar}-${wine.zone}`;
+}
+
+function withManualPlacement(wine, cellar, zone, priority) {
+  return normalizeWine({
+    ...wine,
+    cellarOverride: cellar,
+    zoneOverride: zone,
+    placementPriority: priority,
+  });
+}
+
+function reorderManualPlacement(wines, sourceId, target) {
+  const source = wines.find((wine) => wine.id === sourceId);
+  if (!source) return wines;
+  const targetWine = target.targetWineId ? wines.find((wine) => wine.id === target.targetWineId) : null;
+  if (targetWine?.id === source.id) return wines;
+
+  const sourceKey = placementGroupKey(source);
+  const targetKey = `${target.cellar}-${target.zone}`;
+
+  if (targetWine && sourceKey === targetKey) {
+    const ordered = wines
+      .filter((wine) => placementGroupKey(wine) === sourceKey)
+      .sort((a, b) => Number(a.slot || 0) - Number(b.slot || 0) || placementSort(a, b));
+    const sourceIndex = ordered.findIndex((wine) => wine.id === source.id);
+    const targetIndex = ordered.findIndex((wine) => wine.id === targetWine.id);
+    if (sourceIndex < 0 || targetIndex < 0) return wines;
+    const swapped = [...ordered];
+    [swapped[sourceIndex], swapped[targetIndex]] = [swapped[targetIndex], swapped[sourceIndex]];
+    const replacements = new Map(swapped.map((wine, index) => [wine.id, withManualPlacement(wine, source.cellar, source.zone, index + 1)]));
+    return wines.map((wine) => replacements.get(wine.id) || wine);
+  }
+
+  const byKey = (key) => wines
+    .filter((wine) => placementGroupKey(wine) === key && wine.id !== source.id && wine.id !== targetWine?.id)
+    .sort((a, b) => Number(a.slot || 0) - Number(b.slot || 0) || placementSort(a, b));
+  const groupKeys = new Set([sourceKey, targetKey]);
+  const reorderedByKey = {};
+
+  for (const key of groupKeys) {
+    const group = byKey(key);
+    if (targetWine && key === sourceKey) {
+      const sourceIndex = Math.max(0, Math.min(group.length, Number(source.slot || 1) - 1));
+      group.splice(sourceIndex, 0, { ...targetWine, cellar: source.cellar, zone: source.zone });
+    } else if (key === targetKey) {
+      const targetIndex = Math.max(0, Math.min(group.length, Number(target.slot || 1) - 1));
+      group.splice(targetIndex, 0, { ...source, cellar: target.cellar, zone: target.zone });
+    }
+    reorderedByKey[key] = group.map((wine, index) => withManualPlacement(
+      wine,
+      key === targetKey ? target.cellar : source.cellar,
+      key === targetKey ? target.zone : source.zone,
+      index + 1,
+    ));
+  }
+
+  const replacements = new Map(Object.values(reorderedByKey).flat().map((wine) => [wine.id, wine]));
+  return wines.map((wine) => replacements.get(wine.id) || wine);
 }
 
 function loadWines() {
@@ -807,6 +871,16 @@ function App() {
     return placed;
   }
 
+  function moveWinePlacement(sourceId, target) {
+    const source = wines.find((wine) => wine.id === sourceId);
+    if (!source) return;
+    const next = reorderManualPlacement(wines, sourceId, target);
+    const placed = persistWines(next);
+    const movedWine = placed.find((wine) => wine.id === sourceId);
+    if (movedWine) setActiveWineId(movedWine.id);
+    showToast(target.targetWineId ? "Cellar slots swapped." : "Placement saved.");
+  }
+
   function openTool(tab) {
     setToolTab(tab);
     setView("tools");
@@ -980,7 +1054,7 @@ function App() {
         </header>
 
         {view === "dashboard" && <Dashboard stats={stats} wines={wines} openWine={(id) => { setActiveWineId(id); setView("detail"); }} setView={setView} openTool={openTool} />}
-        {view === "cellars" && <Cellars wines={wines} openWine={(id) => { setActiveWineId(id); setView("detail"); }} showPrices={showPrices} />}
+        {view === "cellars" && <Cellars wines={wines} openWine={(id) => { setActiveWineId(id); setView("detail"); }} showPrices={showPrices} moveWinePlacement={moveWinePlacement} />}
         {view === "collection" && (
           <Collection
             wines={wines}
@@ -1590,11 +1664,22 @@ function PrintAppendixTable({ title, kicker, rows, showPrices }) {
   );
 }
 
-function Cellars({ wines, openWine, showPrices }) {
+function Cellars({ wines, openWine, showPrices, moveWinePlacement }) {
   const [cellarQueries, setCellarQueries] = useState({ 1: "", 2: "" });
+  const [draggingWineId, setDraggingWineId] = useState(null);
+  const [dropTarget, setDropTarget] = useState("");
 
   function setCellarQuery(cellar, value) {
     setCellarQueries((current) => ({ ...current, [cellar]: value }));
+  }
+
+  function handleSlotDrop(event, target) {
+    event.preventDefault();
+    const sourceId = Number(event.dataTransfer.getData("text/plain") || draggingWineId);
+    setDropTarget("");
+    setDraggingWineId(null);
+    if (!sourceId) return;
+    moveWinePlacement(sourceId, target);
   }
 
   return (
@@ -1631,11 +1716,11 @@ function Cellars({ wines, openWine, showPrices }) {
             <div className="cellar-layout">
               {cellar === 1 ? (
                 <>
-                  <Zone title="White Racks" cellar={cellar} zone="top" wines={wines} openWine={openWine} showPrices={showPrices} searchQuery={query} />
-                  <Zone title="Red Racks Under $50" cellar={cellar} zone="bottom" wines={wines} openWine={openWine} showPrices={showPrices} searchQuery={query} />
+                  <Zone title="White Racks" cellar={cellar} zone="top" wines={wines} openWine={openWine} showPrices={showPrices} searchQuery={query} draggingWineId={draggingWineId} setDraggingWineId={setDraggingWineId} dropTarget={dropTarget} setDropTarget={setDropTarget} handleSlotDrop={handleSlotDrop} />
+                  <Zone title="Red Racks Under $50" cellar={cellar} zone="bottom" wines={wines} openWine={openWine} showPrices={showPrices} searchQuery={query} draggingWineId={draggingWineId} setDraggingWineId={setDraggingWineId} dropTarget={dropTarget} setDropTarget={setDropTarget} handleSlotDrop={handleSlotDrop} />
                 </>
               ) : (
-                <Zone title="Red Racks $50+" cellar={cellar} zone="fullRed" wines={wines} openWine={openWine} showPrices={showPrices} searchQuery={query} />
+                <Zone title="Red Racks $50+" cellar={cellar} zone="fullRed" wines={wines} openWine={openWine} showPrices={showPrices} searchQuery={query} draggingWineId={draggingWineId} setDraggingWineId={setDraggingWineId} dropTarget={dropTarget} setDropTarget={setDropTarget} handleSlotDrop={handleSlotDrop} />
               )}
             </div>
           </section>
@@ -1652,7 +1737,7 @@ function CellarRules() {
     ["Right", "$50+ reds", "The right cellar is now six racks of red wine priced above $50."],
     ["Slots", "8 per rack", "Each rack row has eight bottle positions from left to right."],
     ["Order", "Low to high price", "Within each zone, bottles are sorted from lowest price to highest price."],
-    ["Preview", "Hover any slot", "Hover a filled slot to see the label, value, varietal, rack, and position."],
+    ["Move", "Drag/drop slots", "Drag a filled slot to an empty slot to move it, or onto another bottle to swap."],
   ];
   return (
     <section className="rule-band">
@@ -1667,7 +1752,7 @@ function CellarRules() {
   );
 }
 
-function Zone({ title, cellar, zone, wines, openWine, showPrices, searchQuery = "" }) {
+function Zone({ title, cellar, zone, wines, openWine, showPrices, searchQuery = "", draggingWineId, setDraggingWineId, dropTarget, setDropTarget, handleSlotDrop }) {
   const zoneWines = wines.filter((wine) => wine.cellar === cellar && wine.zone === zone);
   const bottleSlots = bottleSlotsForWines(zoneWines);
   const rackType = zone === "top" ? "White" : "Red";
@@ -1715,10 +1800,32 @@ function Zone({ title, cellar, zone, wines, openWine, showPrices, searchQuery = 
                   const wine = bottle?.wine;
                   const meta = getSlotMeta(zone, slot);
                   const isSearchMatch = wine && matchesCellarSearch(wine, searchQuery);
+                  const dropKey = `${cellar}-${zone}-${slot}`;
                   return (
                     <button
                       key={slot}
-                      className={`slot ${wine ? "filled" : ""} ${hasSearch && wine ? (isSearchMatch ? "search-match" : "search-muted") : ""}`}
+                      className={`slot ${wine ? "filled" : ""} ${draggingWineId && wine?.id === draggingWineId ? "dragging" : ""} ${dropTarget === dropKey ? "drop-target" : ""} ${hasSearch && wine ? (isSearchMatch ? "search-match" : "search-muted") : ""}`}
+                      draggable={Boolean(wine)}
+                      onDragStart={(event) => {
+                        if (!wine) return;
+                        event.dataTransfer.setData("text/plain", String(wine.id));
+                        event.dataTransfer.effectAllowed = "move";
+                        setDraggingWineId(wine.id);
+                      }}
+                      onDragEnd={() => {
+                        setDraggingWineId(null);
+                        setDropTarget("");
+                      }}
+                      onDragOver={(event) => {
+                        if (!draggingWineId) return;
+                        event.preventDefault();
+                        event.dataTransfer.dropEffect = "move";
+                        setDropTarget(dropKey);
+                      }}
+                      onDragLeave={() => {
+                        if (dropTarget === dropKey) setDropTarget("");
+                      }}
+                      onDrop={(event) => handleSlotDrop(event, { cellar, zone, slot, targetWineId: wine?.id })}
                       onClick={() => wine && openWine(wine.id)}
                       title={wine ? wineTitle(wine) : "Empty slot"}
                     >

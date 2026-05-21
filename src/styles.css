@@ -813,6 +813,48 @@ p {
   opacity: 1;
 }
 
+.slot[draggable="true"] {
+  cursor: grab;
+}
+
+.slot[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+.slot.dragging {
+  opacity: 0.48;
+  outline: 2px dashed rgba(233, 191, 127, 0.72);
+  outline-offset: 3px;
+}
+
+.slot.drop-target {
+  border-color: rgba(233, 191, 127, 0.92);
+  background:
+    linear-gradient(180deg, rgba(233, 191, 127, 0.28), rgba(110, 23, 40, 0.12)),
+    var(--panel-soft);
+  box-shadow: 0 0 0 3px rgba(233, 191, 127, 0.22);
+}
+
+.slot.drop-target::after {
+  content: "Drop";
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  padding: 2px 6px;
+  border: 1px solid rgba(233, 191, 127, 0.64);
+  border-radius: 999px;
+  background: rgba(22, 11, 13, 0.72);
+  color: var(--gold);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.theme-light .slot.drop-target::after {
+  background: rgba(255, 249, 238, 0.9);
+}
+
 .slot-kicker {
   display: flex;
   align-items: center;
