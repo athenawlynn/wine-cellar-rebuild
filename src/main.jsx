@@ -690,6 +690,19 @@ function drinkSoonWines(wines, limit = 10) {
     .slice(0, limit);
 }
 
+function cellarLocationLabel(wine) {
+  const meta = getSlotMeta(wine.zone, wine.slot);
+  return `${wine.cellar === 1 ? "Left Cellar" : "Right Cellar"} · ${zoneLabel(wine.zone)} · ${meta.shortLabel}`;
+}
+
+function cellarBookRegionLine(wine) {
+  return [wine.region, wine.country].filter(Boolean).join(" · ") || "Region pending";
+}
+
+function cellarBookVarietyLine(wine) {
+  return [wine.variety || "Blend", wine.category || "Wine"].filter(Boolean).join(" · ");
+}
+
 function getCellarBookStats(wines) {
   const bottles = wines.reduce((sum, wine) => sum + Number(wine.quantity || 0), 0);
   const value = wines.reduce((sum, wine) => sum + averagePrice(wine) * Number(wine.quantity || 0), 0);
@@ -1228,31 +1241,19 @@ const CELLAR_BOOK_STYLES = [
 function PrintableCellarBook({ wines }) {
   const [reportStyle, setReportStyle] = useState("Full Cellar Book");
   const [showPrices, setShowPrices] = useState(true);
-  const [showNotes, setShowNotes] = useState(true);
+  const [showNotes, setShowNotes] = useState(false);
   const [showLocation, setShowLocation] = useState(true);
-  const [compact, setCompact] = useState(false);
+  const [reportDensity, setReportDensity] = useState("Catalogue");
   const stats = useMemo(() => getCellarBookStats(wines), [wines]);
   const generatedAt = useMemo(() => new Date(), []);
-  const options = { showPrices, showNotes, showLocation, compact };
-  const reportSections = useMemo(() => {
-    const sections = {
-      "By Type": [{ title: "By Type", groups: groupByType(wines) }],
-      "By Region": [{ title: "By Region", groups: groupByRegion(wines) }],
-      "By Vintage": [{ title: "By Vintage", groups: groupByVintage(wines) }],
-      "By Price": [{ title: "By Price", groups: groupByPrice(wines) }],
-      "Tasting Notes": [{ title: "Tasting Notes", groups: [{ title: "Cellar Tasting Notes", wines: tastingNotesList(wines) }], forceNotes: true }],
-    };
-    if (reportStyle === "Full Cellar Book") {
-      return [
-        ...sections["By Type"],
-        ...sections["By Region"],
-        ...sections["By Vintage"],
-        ...sections["By Price"],
-        ...sections["Tasting Notes"],
-      ];
-    }
-    return sections[reportStyle] || sections["By Type"];
-  }, [reportStyle, wines]);
+  const options = { showPrices, showNotes, showLocation, detailed: reportDensity === "Detailed Notes" || reportStyle === "Tasting Notes" };
+  const singleReport = {
+    "By Price": { title: "By Price", groups: groupByPrice(wines), kicker: "Value tiers" },
+    "By Type": { title: "By Type", groups: groupByType(wines), kicker: "Cellar inventory" },
+    "By Vintage": { title: "By Vintage", groups: groupByVintage(wines), kicker: "Vintage reference" },
+    "By Region": { title: "By Region", groups: groupByRegion(wines), kicker: "Regional index" },
+    "Tasting Notes": { title: "Tasting Notes", groups: [{ title: "Cellar Tasting Notes", wines: tastingNotesList(wines) }], kicker: "Service notes", forceNotes: true },
+  }[reportStyle];
 
   return (
     <div className="cellar-book-view">
@@ -1265,21 +1266,39 @@ function PrintableCellarBook({ wines }) {
         setShowNotes={setShowNotes}
         showLocation={showLocation}
         setShowLocation={setShowLocation}
-        compact={compact}
-        setCompact={setCompact}
+        reportDensity={reportDensity}
+        setReportDensity={setReportDensity}
       />
-      <div className={`cellar-book ${compact ? "compact" : "detailed"}`}>
+      <div className={`cellar-book ${options.detailed ? "detailed-notes" : "catalogue"}`}>
         <CellarBookCover stats={stats} generatedAt={generatedAt} />
-        <CellarBookSummary stats={stats} wines={wines} showPrices={showPrices} />
-        {reportSections.map((section) => (
-          <PrintSection
-            key={section.title}
-            title={section.title}
-            groups={section.groups}
-            options={options}
-            forceNotes={section.forceNotes}
-          />
-        ))}
+        {reportStyle === "Full Cellar Book" ? (
+          <>
+            <CellarBookSummary stats={stats} wines={wines} showPrices={showPrices} />
+            <CellarBookIndex stats={stats} wines={wines} showPrices={showPrices} />
+            <PrintSection
+              title="Primary Inventory by Type"
+              kicker="Cellar inventory"
+              groups={groupByType(wines)}
+              options={options}
+              summary={`${stats.bottles} bottles · ${showPrices ? `${money(stats.value)} estimated value` : `${stats.records} records`}`}
+            />
+            <PrintAppendixTable title="Appendix A: Region Summary" kicker="Regional overview" rows={summarizePrintGroups(groupByRegion(wines))} showPrices={showPrices} />
+            <PrintAppendixTable title="Appendix B: Vintage Summary" kicker="Vintage overview" rows={summarizePrintGroups(groupByVintage(wines))} showPrices={showPrices} />
+            <PrintAppendixTable title="Appendix C: Price Summary" kicker="Value overview" rows={summarizePrintGroups(groupByPrice(wines))} showPrices={showPrices} />
+          </>
+        ) : (
+          <>
+            <CellarBookMiniHeader reportStyle={reportStyle} stats={stats} generatedAt={generatedAt} showPrices={showPrices} />
+            <PrintSection
+              title={singleReport.title}
+              kicker={singleReport.kicker}
+              groups={singleReport.groups}
+              options={options}
+              forceNotes={singleReport.forceNotes}
+              summary={`${stats.bottles} bottles${showPrices ? ` · ${money(stats.value)} estimated value` : ""}`}
+            />
+          </>
+        )}
       </div>
     </div>
   );
@@ -1294,8 +1313,8 @@ function PrintToolbar({
   setShowNotes,
   showLocation,
   setShowLocation,
-  compact,
-  setCompact,
+  reportDensity,
+  setReportDensity,
 }) {
   return (
     <div className="print-toolbar">
@@ -1312,11 +1331,18 @@ function PrintToolbar({
       <label className="toggle-line"><input type="checkbox" checked={showPrices} onChange={(event) => setShowPrices(event.target.checked)} /> Show prices</label>
       <label className="toggle-line"><input type="checkbox" checked={showNotes} onChange={(event) => setShowNotes(event.target.checked)} /> Show tasting notes</label>
       <label className="toggle-line"><input type="checkbox" checked={showLocation} onChange={(event) => setShowLocation(event.target.checked)} /> Show cellar location</label>
-      <label className="toggle-line"><input type="checkbox" checked={!compact} onChange={(event) => setCompact(!event.target.checked)} /> Detailed format</label>
+      <label>
+        Report density
+        <select value={reportDensity} onChange={(event) => setReportDensity(event.target.value)}>
+          <option>Catalogue</option>
+          <option>Detailed Notes</option>
+        </select>
+      </label>
       <button className="primary-link print-button" type="button" onClick={() => window.print()}>
         <Printer size={18} />
         Print
       </button>
+      <p className="print-dialog-note">For cleanest PDF: turn off browser Headers and Footers.</p>
     </div>
   );
 }
@@ -1324,20 +1350,21 @@ function PrintToolbar({
 function CellarBookCover({ stats, generatedAt }) {
   return (
     <section className="print-page cellar-book-cover">
-      <div className="cover-rule" />
-      <p className="eyebrow">Generated {generatedAt.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}</p>
-      <h1>Lynn Cave Privée</h1>
-      <h2>Private Cellar Book</h2>
-      <div className="print-summary-grid cover-metrics">
-        <PrintMetric label="Total Records" value={stats.records} />
-        <PrintMetric label="Bottle Count" value={stats.bottles} />
-        <PrintMetric label="Estimated Value" value={money(stats.value)} />
-        <PrintMetric label="Average Bottle" value={money(stats.averageBottleValue)} />
-        <PrintMetric label="Red Bottles" value={stats.redCount} />
-        <PrintMetric label="White Bottles" value={stats.whiteCount} />
-        <PrintMetric label="Regions" value={stats.regions} />
+      <div className="cover-inner">
+        <div className="cover-mark">LC</div>
+        <p className="cover-eyebrow">Private Cellar Management</p>
+        <div className="cover-rule" />
+        <h1 className="cover-title">Lynn Cave Privée</h1>
+        <h2 className="cover-subtitle">Private Cellar Book</h2>
+        <div className="cover-rule" />
+        <p className="cover-meta">Generated {generatedAt.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}</p>
+        <div className="cover-stat-line">
+          <span>{stats.bottles} bottles</span>
+          <span>{stats.regions} regions</span>
+          <span>{money(stats.value)} estimated value</span>
+        </div>
+        <footer>Private wine cellar planning, organization, and collection oversight.</footer>
       </div>
-      <footer>Private wine cellar planning, organization, and collection oversight.</footer>
     </section>
   );
 }
@@ -1346,11 +1373,21 @@ function CellarBookSummary({ stats, wines, showPrices }) {
   return (
     <section className="print-page cellar-book-summary">
       <PrintRunningHeader />
-      <div className="print-section-title">
-        <p className="eyebrow">Collection overview</p>
-        <h2>Summary Page</h2>
+      <div className="print-section-header">
+        <p className="print-page-kicker">Collection overview</p>
+        <h2 className="print-page-title">Collection Summary</h2>
+        <p>{stats.bottles} bottles across {stats.records} records · {stats.regions} represented regions</p>
       </div>
       <div className="print-summary-grid">
+        <PrintMetric label="Total Records" value={stats.records} />
+        <PrintMetric label="Total Bottles" value={stats.bottles} />
+        <PrintMetric label="Estimated Value" value={showPrices ? money(stats.value) : "Hidden"} />
+        <PrintMetric label="Average Bottle" value={showPrices ? money(stats.averageBottleValue) : "Hidden"} />
+        <PrintMetric label="Red Bottles" value={stats.redCount} />
+        <PrintMetric label="White Bottles" value={stats.whiteCount} />
+        <PrintMetric label="Regions" value={stats.regions} />
+      </div>
+      <div className="print-index-grid">
         <PrintSummaryBlock title="Collection Value by Price Band">
           {stats.priceBands.map((band) => (
             <PrintSummaryLine key={band.title} label={band.title} value={`${band.bottles} bottles${showPrices ? ` · ${money(band.value)}` : ""}`} />
@@ -1385,6 +1422,57 @@ function CellarBookSummary({ stats, wines, showPrices }) {
   );
 }
 
+function CellarBookIndex({ stats, wines, showPrices }) {
+  const valuable = topValueWines(wines, 10);
+  const soon = drinkSoonWines(wines, 10);
+  return (
+    <section className="print-page cellar-book-index">
+      <PrintRunningHeader />
+      <div className="print-section-header">
+        <p className="print-page-kicker">Quick reference</p>
+        <h2 className="print-page-title">Cellar Index</h2>
+        <p>Left Cellar holds white and lower-price working bottles. Right Cellar holds red collection bottles and higher-value placements.</p>
+      </div>
+      <div className="print-index-grid">
+        <PrintSummaryBlock title="Cellar Split">
+          {["Left Cellar", "Right Cellar"].map((cellar) => (
+            <PrintSummaryLine key={cellar} label={cellar} value={`${stats.cellarSplit[cellar] || 0} bottles`} />
+          ))}
+          <PrintSummaryLine label="White racks" value="Left Cellar upper racks" />
+          <PrintSummaryLine label="Red racks" value="Right Cellar red racks" />
+        </PrintSummaryBlock>
+        <PrintSummaryBlock title="Placement Logic">
+          <p className="print-muted">White and dessert wines are held together for service access. Reds are ordered by bottle value within cellar zones, low to high.</p>
+          <p className="print-muted">Quantity changes total collection value, while physical slot order follows unit bottle value.</p>
+        </PrintSummaryBlock>
+        <PrintSummaryBlock title="Top 10 Most Valuable">
+          {valuable.map((wine) => (
+            <PrintSummaryLine key={`valuable-${wine.id}`} label={`${wine.vintage || "NV"} ${wine.producer}`} value={showPrices ? money(averagePrice(wine)) : `Qty ${wine.quantity}`} />
+          ))}
+        </PrintSummaryBlock>
+        <PrintSummaryBlock title="Drink Soon">
+          {soon.length ? soon.map((wine) => (
+            <PrintSummaryLine key={`soon-${wine.id}`} label={`${wine.vintage || "NV"} ${wine.producer}`} value={inferDrinkWindow(wine)} />
+          )) : <p className="print-muted">No urgent drink-soon bottles flagged.</p>}
+        </PrintSummaryBlock>
+      </div>
+    </section>
+  );
+}
+
+function CellarBookMiniHeader({ reportStyle, stats, generatedAt, showPrices }) {
+  return (
+    <section className="print-page print-mini-cover">
+      <PrintRunningHeader />
+      <div className="print-section-header">
+        <p className="print-page-kicker">Private cellar report</p>
+        <h2 className="print-page-title">{reportStyle}</h2>
+        <p>{generatedAt.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })} · {stats.bottles} bottles{showPrices ? ` · ${money(stats.value)} estimated value` : ""}</p>
+      </div>
+    </section>
+  );
+}
+
 function PrintMetric({ label, value }) {
   return (
     <div className="print-metric">
@@ -1412,19 +1500,20 @@ function PrintSummaryLine({ label, value }) {
   );
 }
 
-function PrintSection({ title, groups, options, forceNotes = false }) {
+function PrintSection({ title, groups, options, forceNotes = false, kicker = "Cellar inventory", summary = "" }) {
   return (
     <section className="print-page print-section">
       <PrintRunningHeader />
-      <div className="print-section-title">
-        <p className="eyebrow">Cellar inventory</p>
-        <h2>{title}</h2>
+      <div className="print-section-header">
+        <p className="print-page-kicker">{kicker}</p>
+        <h2 className="print-page-title">{title}</h2>
+        {summary && <p>{summary}</p>}
       </div>
       {groups.filter((group) => group.wines.length).map((group) => (
         <div className="print-group" key={group.title}>
-          <div className="print-group-heading">
+          <div className="print-group-header">
             <h3>{group.title}</h3>
-            <span>{group.wines.reduce((sum, wine) => sum + Number(wine.quantity || 0), 0)} bottles</span>
+            <span className="print-group-count">{group.wines.reduce((sum, wine) => sum + Number(wine.quantity || 0), 0)} bottles</span>
           </div>
           <div className="print-wine-list">
             {group.wines.map((wine) => (
@@ -1439,7 +1528,7 @@ function PrintSection({ title, groups, options, forceNotes = false }) {
 
 function PrintRunningHeader() {
   return (
-    <div className="print-running-header">
+    <div className="print-page-header">
       <span>Lynn Cave Privée</span>
       <span>Private Cellar Book</span>
     </div>
@@ -1447,29 +1536,57 @@ function PrintRunningHeader() {
 }
 
 function PrintWineRow({ wine, options, forceNotes = false }) {
-  const meta = getSlotMeta(wine.zone, wine.slot);
-  const location = `${wine.cellar === 1 ? "Left Cellar" : "Right Cellar"} · ${meta.slotLabel} · ${meta.shortLabel}`;
   const notes = inferNotes(wine);
   return (
     <article className="print-wine-row">
-      <div className="print-wine-vintage">{wine.vintage || "NV"}</div>
+      <div className="print-vintage-badge">{wine.vintage || "NV"}</div>
       <div className="print-wine-main">
-        <div className="print-wine-title">
-          <strong>{wine.producer}</strong>
-          <span>{wine.wineName}</span>
-        </div>
-        <div className="print-wine-meta">
-          <span>{wine.category || "Wine"}</span>
-          <span>{[wine.region, wine.country].filter(Boolean).join(", ") || "Region pending"}</span>
-          <span>{wine.variety || "Blend"}</span>
-          <span>Qty {wine.quantity}</span>
-          {options.showPrices && <span className="print-price">{money(averagePrice(wine))}</span>}
-        </div>
-        {options.showLocation && <div className="print-muted">{location}</div>}
-        <div className="print-muted">Drink window: {inferDrinkWindow(wine)}</div>
-        {(options.showNotes || forceNotes) && <p className="print-notes">{notes}</p>}
+        <h3 className="print-producer">{wine.producer || "Unknown Producer"}</h3>
+        <p className="print-wine-name">{wine.wineName || "Unnamed wine"}</p>
+        <p className="print-wine-meta">{cellarBookRegionLine(wine)}</p>
+        <p className="print-wine-meta">{cellarBookVarietyLine(wine)} · Drink window {inferDrinkWindow(wine)}</p>
       </div>
+      <div className="print-wine-right">
+        <span className="print-qty">Qty {wine.quantity || 1}</span>
+        {options.showPrices && <span className="print-price">{money(averagePrice(wine))}</span>}
+        {options.showLocation && <span className="print-slot">{cellarLocationLabel(wine)}</span>}
+      </div>
+      {(options.showNotes || options.detailed || forceNotes) && <p className="print-note">{options.detailed || forceNotes ? notes : notes.split(".")[0] + "."}</p>}
     </article>
+  );
+}
+
+function PrintAppendixTable({ title, kicker, rows, showPrices }) {
+  return (
+    <section className="print-page print-section print-appendix">
+      <PrintRunningHeader />
+      <div className="print-section-header">
+        <p className="print-page-kicker">{kicker}</p>
+        <h2 className="print-page-title">{title}</h2>
+      </div>
+      <table className="print-appendix-table">
+        <thead>
+          <tr>
+            <th>Group</th>
+            <th>Bottles</th>
+            {showPrices && <th>Total Value</th>}
+            <th>Notable Bottle</th>
+            <th>Suggested Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.group}>
+              <td>{row.group}</td>
+              <td>{row.bottles}</td>
+              {showPrices && <td>{money(row.value)}</td>}
+              <td>{row.notable}</td>
+              <td>{row.action}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
   );
 }
 

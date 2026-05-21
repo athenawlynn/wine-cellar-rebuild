@@ -2067,3 +2067,654 @@ video {
     justify-items: stretch;
   }
 }
+
+/* Cellar Book catalogue redesign */
+.cellar-book-view {
+  display: grid;
+  gap: 22px;
+}
+
+.print-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.print-toolbar > div:first-child {
+  flex: 1 1 240px;
+}
+
+.print-toolbar > label {
+  flex: 0 1 210px;
+}
+
+.print-toolbar .toggle-line {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 248, 239, 0.06);
+  text-transform: none;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
+.print-toolbar .toggle-line input {
+  width: auto;
+  min-height: auto;
+}
+
+.print-button {
+  width: max-content;
+}
+
+.print-dialog-note {
+  flex: 1 1 100%;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.cellar-book {
+  --print-paper: #fbf6ec;
+  --print-ink: #241514;
+  --print-burgundy: #5b1724;
+  --print-gold: #b18a4a;
+  --print-rule: #d8c6a3;
+  --print-fill: #f6efe2;
+  --print-muted: #6f5a52;
+  display: grid;
+  gap: 24px;
+  color: var(--print-ink);
+}
+
+.print-page {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--print-rule);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(177, 138, 74, 0.08), transparent 230px),
+    var(--print-paper);
+  color: var(--print-ink);
+  padding: clamp(34px, 4vw, 58px);
+  box-shadow: 0 24px 72px rgba(36, 21, 20, 0.13);
+}
+
+.cellar-book-cover {
+  display: grid;
+  min-height: 850px;
+  place-items: center;
+  text-align: center;
+}
+
+.cover-inner {
+  width: min(760px, 100%);
+}
+
+.cover-mark {
+  display: grid;
+  width: 86px;
+  height: 86px;
+  margin: 0 auto 34px;
+  place-items: center;
+  border: 1px solid var(--print-gold);
+  border-radius: 999px;
+  color: var(--print-burgundy);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.7rem;
+  letter-spacing: 0.08em;
+}
+
+.cover-eyebrow,
+.print-page-kicker {
+  margin: 0 0 10px;
+  color: var(--print-gold);
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.cover-rule {
+  width: 210px;
+  height: 1px;
+  margin: 28px auto;
+  background: var(--print-gold);
+}
+
+.cover-title {
+  margin: 0;
+  color: var(--print-ink);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(3.3rem, 6.4vw, 5.8rem);
+  font-weight: 500;
+  line-height: 0.98;
+}
+
+.cover-subtitle {
+  margin: 14px 0 0;
+  color: var(--print-burgundy);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.4rem, 2.5vw, 2.2rem);
+  font-weight: 500;
+}
+
+.cover-meta,
+.cover-stat-line,
+.cellar-book-cover footer {
+  color: var(--print-muted);
+  font-family: Inter, system-ui, sans-serif;
+}
+
+.cover-stat-line {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 20px;
+  margin-top: 22px;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.cellar-book-cover footer {
+  margin-top: 64px;
+  font-size: 0.92rem;
+}
+
+.print-page-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding-bottom: 9px;
+  border-bottom: 1px solid var(--print-gold);
+  color: var(--print-burgundy);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 0.9rem;
+  letter-spacing: 0.04em;
+}
+
+.print-section-header {
+  margin-bottom: 24px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--print-rule);
+}
+
+.print-page-title {
+  margin: 0;
+  color: var(--print-burgundy);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.9rem, 3.2vw, 2.7rem);
+  font-weight: 500;
+  line-height: 1.04;
+}
+
+.print-section-header p:not(.print-page-kicker) {
+  margin: 8px 0 0;
+  color: var(--print-muted);
+  font-family: Inter, system-ui, sans-serif;
+}
+
+.print-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.print-index-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.print-metric,
+.print-summary-card,
+.print-summary-block {
+  border: 1px solid var(--print-rule);
+  border-radius: 8px;
+  background: rgba(246, 239, 226, 0.72);
+  padding: 14px;
+}
+
+.print-metric span,
+.print-summary-line span,
+.print-muted {
+  color: var(--print-muted);
+  font-family: Inter, system-ui, sans-serif;
+}
+
+.print-metric span {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.print-metric strong {
+  display: block;
+  margin-top: 8px;
+  color: var(--print-ink);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.55rem;
+  font-weight: 500;
+}
+
+.print-summary-block h3 {
+  margin: 0 0 10px;
+  color: var(--print-burgundy);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.print-summary-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(177, 138, 74, 0.24);
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 0.88rem;
+}
+
+.print-summary-line:last-child {
+  border-bottom: 0;
+}
+
+.print-summary-line strong {
+  color: var(--print-ink);
+  text-align: right;
+}
+
+.print-group {
+  margin-top: 26px;
+}
+
+.print-group-header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 4px;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--print-gold);
+}
+
+.print-group-header h3 {
+  margin: 0;
+  color: var(--print-burgundy);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.35rem;
+  font-weight: 500;
+}
+
+.print-group-count {
+  color: var(--print-muted);
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.print-wine-list {
+  display: block;
+}
+
+.print-wine-row {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr) 120px;
+  gap: 14px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(177, 138, 74, 0.28);
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.print-vintage-badge {
+  align-self: start;
+  border: 1px solid var(--print-gold);
+  color: var(--print-burgundy);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 8px 4px;
+  text-align: center;
+}
+
+.print-producer {
+  margin: 0;
+  color: var(--print-ink);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.02rem;
+  font-weight: 600;
+  line-height: 1.18;
+}
+
+.print-wine-name {
+  margin: 2px 0 0;
+  color: var(--print-burgundy);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 0.96rem;
+  font-style: italic;
+  line-height: 1.2;
+}
+
+.print-wine-meta,
+.print-wine-location {
+  margin: 4px 0 0;
+  color: var(--print-muted);
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.print-wine-right {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  color: var(--print-muted);
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 0.82rem;
+  line-height: 1.25;
+  text-align: right;
+}
+
+.print-price {
+  color: var(--print-burgundy);
+  font-weight: 800;
+}
+
+.print-qty {
+  color: var(--print-ink);
+  font-weight: 800;
+}
+
+.print-slot {
+  color: var(--print-muted);
+}
+
+.print-note {
+  grid-column: 2 / 4;
+  margin: 4px 0 0;
+  padding-left: 8px;
+  border-left: 2px solid var(--print-rule);
+  color: #4d3d38;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.print-appendix-table {
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--print-ink);
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 0.88rem;
+}
+
+.print-appendix-table th {
+  padding: 10px 8px;
+  border-bottom: 2px solid var(--print-gold);
+  color: var(--print-burgundy);
+  font-size: 0.74rem;
+  letter-spacing: 0.1em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.print-appendix-table td {
+  padding: 10px 8px;
+  border-bottom: 1px solid rgba(177, 138, 74, 0.24);
+}
+
+.print-appendix-table tbody tr:nth-child(even) {
+  background: rgba(246, 239, 226, 0.58);
+}
+
+.print-appendix-table th:nth-child(2),
+.print-appendix-table th:nth-child(3),
+.print-appendix-table td:nth-child(2),
+.print-appendix-table td:nth-child(3) {
+  text-align: right;
+}
+
+@page {
+  size: letter;
+  margin: 0.55in 0.6in;
+}
+
+@media print {
+  body {
+    background: #fffaf2 !important;
+    color: #241514 !important;
+  }
+
+  *,
+  *::before,
+  *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    box-shadow: none !important;
+  }
+
+  .sidebar,
+  .topbar,
+  .site-footer,
+  .toast,
+  .scan-cta,
+  .drawer-backdrop,
+  .scan-drawer,
+  .print-toolbar,
+  .icon-button,
+  .nav-button,
+  .ghost-button,
+  .danger-button,
+  .save-button,
+  .primary-link,
+  button,
+  input,
+  select,
+  textarea {
+    display: none !important;
+  }
+
+  .app-shell {
+    display: block !important;
+    min-height: auto !important;
+    background: #fffaf2 !important;
+    color: #241514 !important;
+  }
+
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .cellar-book-view,
+  .cellar-book {
+    display: block !important;
+    background: #fffaf2 !important;
+    color: #241514 !important;
+  }
+
+  .print-page {
+    overflow: visible !important;
+    min-height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: #fffaf2 !important;
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .print-page:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  .cellar-book-cover {
+    min-height: 9.25in !important;
+  }
+
+  .cover-mark {
+    width: 0.75in;
+    height: 0.75in;
+    margin-bottom: 0.35in;
+    font-size: 15pt;
+  }
+
+  .cover-eyebrow,
+  .print-page-kicker {
+    font-size: 8.5pt;
+  }
+
+  .cover-title {
+    font-size: 39pt;
+  }
+
+  .cover-subtitle {
+    font-size: 20pt;
+  }
+
+  .cover-rule {
+    width: 2.1in;
+    margin: 0.25in auto;
+  }
+
+  .cover-meta,
+  .cover-stat-line,
+  .cellar-book-cover footer {
+    font-size: 9.5pt;
+  }
+
+  .print-page-header {
+    margin-bottom: 0.22in;
+    padding-bottom: 0.08in;
+    font-size: 9pt;
+  }
+
+  .print-section {
+    break-before: page;
+    page-break-before: always;
+  }
+
+  .print-section-header {
+    margin-bottom: 0.18in;
+    padding-bottom: 0.1in;
+  }
+
+  .print-page-title {
+    font-size: 20pt;
+  }
+
+  .print-section-header p:not(.print-page-kicker) {
+    font-size: 9pt;
+  }
+
+  .print-summary-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.1in;
+    margin-bottom: 0.16in;
+  }
+
+  .print-index-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.12in;
+  }
+
+  .print-metric,
+  .print-summary-block {
+    padding: 0.1in;
+  }
+
+  .print-metric span,
+  .print-summary-line,
+  .print-muted {
+    font-size: 8.5pt;
+  }
+
+  .print-metric strong {
+    font-size: 15pt;
+  }
+
+  .print-summary-block h3 {
+    font-size: 11pt;
+  }
+
+  .print-group {
+    margin-top: 0.2in;
+    break-inside: auto;
+    page-break-inside: auto;
+  }
+
+  .print-group-header {
+    margin-bottom: 0.04in;
+    padding-bottom: 0.06in;
+  }
+
+  .print-group-header h3 {
+    font-size: 14pt;
+  }
+
+  .print-group-count {
+    font-size: 8pt;
+  }
+
+  .print-wine-row {
+    grid-template-columns: 58px 1fr 120px;
+    gap: 14px;
+    padding: 10px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .print-vintage-badge {
+    font-size: 12pt;
+    padding: 6px 4px;
+  }
+
+  .print-producer {
+    font-size: 11.5pt;
+  }
+
+  .print-wine-name {
+    font-size: 10.5pt;
+  }
+
+  .print-wine-meta,
+  .print-wine-right,
+  .print-note,
+  .print-appendix-table {
+    font-size: 8.7pt;
+  }
+
+  .print-note {
+    line-height: 1.35;
+  }
+
+  .print-appendix-table th {
+    font-size: 8pt;
+  }
+
+  .print-appendix-table td,
+  .print-appendix-table th {
+    padding: 7px 6px;
+  }
+}
