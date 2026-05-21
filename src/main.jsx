@@ -39,7 +39,7 @@ import {
 import seedArchive from "./data/archive.json";
 import seedWines from "./data/wines.json";
 import "./styles.css";
-
+import LuxuryCellarBook from "./LuxuryCellarBook.jsx";
 const BRAND_NAME = "Lynn Cave Privée";
 const PHOTO_BASE = "/photos/";
 const WINE_STORAGE_KEY = "lynn-cellar-wines-2026-05-20-price-corrected";
@@ -963,7 +963,7 @@ function App() {
           />
         )}
         {view === "specs" && <SpecsPage />}
-        {view === "print" && <PrintableCellarBook wines={wines} />}
+        {view === "print" && <LuxuryCellarBook wines={wines} />}
         {view === "archive" && <ArchivePage archive={archive} onRestore={restoreArchivedWine} />}
         {view === "detail" && activeWine && (
           <WineDetail
