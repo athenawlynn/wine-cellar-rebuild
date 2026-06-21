@@ -42,8 +42,7 @@ import "./styles.css";
 import LuxuryCellarBook from "./LuxuryCellarBook.jsx";
 const BRAND_NAME = "Lynn Cave Privée";
 const PHOTO_BASE = "/photos/";
-const WINE_STORAGE_KEY = "lynn-cellar-wines-2026-05-20-price-corrected";
-const PREVIOUS_WINE_STORAGE_KEYS = ["lynn-cellar-wines-2026-05-20-rack-layout"];
+const WINE_STORAGE_KEY = "lynn-cellar-wines-2026-06-21-photo-reconciled";
 const ARCHIVE_STORAGE_KEY = "lynn-cellar-archive-2026-05-02-inventory";
 const WISHLIST_STORAGE_KEY = "lynn-cellar-wishlist";
 const VENDOR_STORAGE_KEY = "lynn-cellar-vendors";
@@ -466,22 +465,29 @@ function reorderBottlePlacement(wines, sourceInstanceId, target) {
 }
 
 function loadWines() {
-  const saved = localStorage.getItem(WINE_STORAGE_KEY) || PREVIOUS_WINE_STORAGE_KEYS.map((key) => localStorage.getItem(key)).find(Boolean);
+  const saved = localStorage.getItem(WINE_STORAGE_KEY);
   if (!saved) return applyCellarPlacement(seedWines);
   const savedWines = JSON.parse(saved).map(normalizeWine);
   const savedById = new Map(savedWines.map((wine) => [wine.id, wine]));
   const mergedSeed = seedWines.map((seedWine) => {
-    const savedWine = savedById.get(seedWine.id) || {};
+    const savedWine = savedById.get(seedWine.id);
+    if (!savedWine) return normalizeWine(seedWine);
     return normalizeWine({
-      ...seedWine,
       ...savedWine,
+      ...seedWine,
+      cellarOverride: savedWine.cellarOverride ?? seedWine.cellarOverride,
+      zoneOverride: savedWine.zoneOverride ?? seedWine.zoneOverride,
+      placementPriority: savedWine.placementPriority ?? seedWine.placementPriority,
+      bottlePlacements: savedWine.bottlePlacements ?? seedWine.bottlePlacements,
+      archivedAt: savedWine.archivedAt ?? seedWine.archivedAt,
+      archivedReason: savedWine.archivedReason ?? seedWine.archivedReason,
+      status: savedWine.archivedAt ? savedWine.status : seedWine.status ?? savedWine.status,
       averagePrice: seedWine.averagePrice,
       estimatedPrice: seedWine.estimatedPrice,
       priceEstimate: seedWine.priceEstimate,
     });
   });
-  const customWines = savedWines.filter((wine) => !seedWines.some((seed) => seed.id === wine.id));
-  return applyCellarPlacement([...mergedSeed, ...customWines]);
+  return applyCellarPlacement(mergedSeed);
 }
 
 function loadArchive() {
