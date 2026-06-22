@@ -319,11 +319,14 @@ function bottlePlacementForWine(wine, bottleNumber) {
     : null;
   const cellar = Number(placement?.cellarOverride ?? placement?.cellar ?? wine.cellarOverride ?? wine.cellar ?? cellarForWine(wine));
   const zone = placement?.zoneOverride ?? placement?.zone ?? wine.zoneOverride ?? wine.zone ?? zoneForWine(wine, cellar);
-  const priority = Number(placement?.placementPriority);
+  const explicitPriority = Number(placement?.placementPriority ?? placement?.slot);
+  const winePriority = Number(wine.placementPriority ?? wine.slot);
+  const bottleOffset = Math.max(0, Number(bottleNumber || 1) - 1);
+  const fallbackPriority = Number.isFinite(winePriority) ? winePriority + bottleOffset : null;
   return {
     cellar: [1, 2].includes(cellar) ? cellar : cellarForWine(wine),
     zone: ["top", "bottom", "fullRed"].includes(zone) ? zone : zoneForWine(wine, cellar),
-    placementPriority: Number.isFinite(priority) ? priority : null,
+    placementPriority: Number.isFinite(explicitPriority) ? explicitPriority : fallbackPriority,
   };
 }
 
@@ -1023,7 +1026,14 @@ function App() {
     };
     const nextArchive = [consumed, ...archive];
     const nextWines = wine.quantity > 1
-      ? wines.map((item) => (item.id === id ? { ...item, quantity: item.quantity - 1 } : item))
+      ? wines.map((item) => {
+        if (item.id !== id) return item;
+        const quantity = Math.max(1, Number(item.quantity || 1));
+        const bottlePlacements = Array.isArray(item.bottlePlacements)
+          ? item.bottlePlacements.filter((placement) => Number(placement.bottleNumber) !== quantity)
+          : item.bottlePlacements;
+        return normalizeWine({ ...item, quantity: quantity - 1, bottlePlacements });
+      })
       : wines.filter((item) => item.id !== id);
     const placed = persistWines(nextWines);
     setArchive(nextArchive);
