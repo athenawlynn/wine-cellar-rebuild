@@ -564,6 +564,107 @@
     "placementPriority": 2
   },
   {
+    "id": "austin-hope-cabernet-sauvignon-paso-robles-1-5l-nv",
+    "producer": "Austin Hope",
+    "wineName": "Cabernet Sauvignon Paso Robles 1.5L",
+    "vintage": "NV",
+    "region": "Paso Robles, California",
+    "country": "United States",
+    "variety": "Cabernet Sauvignon",
+    "category": "Red",
+    "size": "1.5L",
+    "quantity": 9,
+    "alcohol": "",
+    "estimatedPrice": 119.99,
+    "averagePrice": 119.99,
+    "priceEstimate": "$119.99",
+    "drinkWindow": "2026-2034",
+    "foodPairing": "Steak, lamb, barbecue, rich roasted dishes",
+    "notes": "Added from Total Wine product listing screenshot. Premium Selection; 1.5L bottle; 335 reviews shown.",
+    "vineyardNotes": "Paso Robles Cabernet Sauvignon from Austin Hope / Hope Family Wines.",
+    "tastingNotes": {
+      "appearance": "",
+      "nose": "Dark fruit, plum, blackberry, cherry, and oak spice.",
+      "palate": "Full-bodied Cabernet with plush fruit, velvet tannins, and earthy structure.",
+      "finish": "Smooth, polished finish."
+    },
+    "frontPhoto": "Austin_Hope_Cabernet_Sauvignon_Paso_Robles_1_5L.png",
+    "backPhoto": "",
+    "sourceUrl": "https://www.totalwine.com/wine/red-wine/cabernet-sauvignon/austin-hope-cabernet-paso/p/227648015?s=903&igrules=true",
+    "status": "Ready",
+    "tags": [
+      "California",
+      "Paso Robles",
+      "Cabernet",
+      "1.5L",
+      "Premium Selection"
+    ],
+    "criticRatings": [],
+    "dateAdded": "2026-06-23",
+    "cellar": 2,
+    "zone": "fullRed",
+    "slot": 33,
+    "cellarOverride": 2,
+    "zoneOverride": "fullRed",
+    "placementPriority": 33,
+    "bottlePlacements": [
+      {
+        "bottleNumber": 1,
+        "cellarOverride": 2,
+        "zoneOverride": "fullRed",
+        "placementPriority": 33
+      },
+      {
+        "bottleNumber": 2,
+        "cellarOverride": 2,
+        "zoneOverride": "fullRed",
+        "placementPriority": 34
+      },
+      {
+        "bottleNumber": 3,
+        "cellarOverride": 2,
+        "zoneOverride": "fullRed",
+        "placementPriority": 35
+      },
+      {
+        "bottleNumber": 4,
+        "cellarOverride": 2,
+        "zoneOverride": "fullRed",
+        "placementPriority": 36
+      },
+      {
+        "bottleNumber": 5,
+        "cellarOverride": 2,
+        "zoneOverride": "fullRed",
+        "placementPriority": 37
+      },
+      {
+        "bottleNumber": 6,
+        "cellarOverride": 2,
+        "zoneOverride": "fullRed",
+        "placementPriority": 38
+      },
+      {
+        "bottleNumber": 7,
+        "cellarOverride": 2,
+        "zoneOverride": "fullRed",
+        "placementPriority": 39
+      },
+      {
+        "bottleNumber": 8,
+        "cellarOverride": 2,
+        "zoneOverride": "fullRed",
+        "placementPriority": 40
+      },
+      {
+        "bottleNumber": 9,
+        "cellarOverride": 2,
+        "zoneOverride": "fullRed",
+        "placementPriority": 41
+      }
+    ]
+  },
+  {
     "id": "marchese-de-petri-il-valore-chianti-2023",
     "producer": "Marchese de Petri",
     "wineName": "Il Valore Chianti",

@@ -42,7 +42,7 @@ import "./styles.css";
 import LuxuryCellarBook from "./LuxuryCellarBook.jsx";
 const BRAND_NAME = "Lynn Cave Privée";
 const PHOTO_BASE = "/photos/";
-const WINE_STORAGE_KEY = "lynn-cellar-wines-2026-06-21-photo-reconciled";
+const WINE_STORAGE_KEY = "lynn-cellar-wines-2026-06-23-austin-hope-grouped";
 const ARCHIVE_STORAGE_KEY = "lynn-cellar-archive-2026-05-02-inventory";
 const WISHLIST_STORAGE_KEY = "lynn-cellar-wishlist";
 const VENDOR_STORAGE_KEY = "lynn-cellar-vendors";
@@ -640,7 +640,8 @@ function filterWines(wines, filters) {
       const countryMatch = filters.country === "All" || wine.country === filters.country;
       const regionMatch = filters.region === "All" || wine.region === filters.region || regionName(wine) === filters.region;
       const badgeMatch = filters.badge === "All" || regionSignal(regionName(wine), [wine]).code === filters.badge;
-      const vintage = Number(wine.vintage || 0);
+      const numericVintage = Number(wine.vintage || 0);
+      const vintage = Number.isFinite(numericVintage) ? numericVintage : 0;
       const price = averagePrice(wine);
       const minVintage = filters.minVintage ? Number(filters.minVintage) : -Infinity;
       const maxVintage = filters.maxVintage ? Number(filters.maxVintage) : Infinity;
