@@ -49,6 +49,10 @@ const VENDOR_STORAGE_KEY = "lynn-cellar-vendors";
 const MAINTENANCE_STORAGE_KEY = "lynn-cellar-maintenance";
 const EVENT_STORAGE_KEY = "lynn-cellar-events";
 const THEME_STORAGE_KEY = "lynn-cellar-theme";
+const WINE_REMOTE_MIGRATION_KEY = "lynn-cellar-wines-remote-migration-v1";
+const WINES_API_PATH = "/api/wines";
+
+let wineSaveQueue = Promise.resolve();
 
 const CELLAR_MODEL = {
   maker: "Allavino",
@@ -469,28 +473,32 @@ function reorderBottlePlacement(wines, sourceInstanceId, target) {
 
 function loadWines() {
   const saved = localStorage.getItem(WINE_STORAGE_KEY);
-  if (!saved) return applyCellarPlacement(seedWines);
-  const savedWines = JSON.parse(saved).map(normalizeWine);
-  const savedById = new Map(savedWines.map((wine) => [wine.id, wine]));
-  const mergedSeed = seedWines.map((seedWine) => {
-    const savedWine = savedById.get(seedWine.id);
-    if (!savedWine) return normalizeWine(seedWine);
-    return normalizeWine({
-      ...savedWine,
-      ...seedWine,
-      cellarOverride: savedWine.cellarOverride ?? seedWine.cellarOverride,
-      zoneOverride: savedWine.zoneOverride ?? seedWine.zoneOverride,
-      placementPriority: savedWine.placementPriority ?? seedWine.placementPriority,
-      bottlePlacements: savedWine.bottlePlacements ?? seedWine.bottlePlacements,
-      archivedAt: savedWine.archivedAt ?? seedWine.archivedAt,
-      archivedReason: savedWine.archivedReason ?? seedWine.archivedReason,
-      status: savedWine.archivedAt ? savedWine.status : seedWine.status ?? savedWine.status,
-      averagePrice: seedWine.averagePrice,
-      estimatedPrice: seedWine.estimatedPrice,
-      priceEstimate: seedWine.priceEstimate,
-    });
-  });
-  return applyCellarPlacement(mergedSeed);
+  let savedWines = [];
+  try {
+    const parsed = saved ? JSON.parse(saved) : [];
+    savedWines = Array.isArray(parsed) ? parsed.map(normalizeWine) : [];
+  } catch {
+    savedWines = [];
+  }
+
+  if (!localStorage.getItem(WINE_REMOTE_MIGRATION_KEY)) {
+    const savedIds = new Set(savedWines.map((wine) => wine.id));
+    const seedIds = new Set(seedWines.map((wine) => wine.id));
+    const legacyWines = Object.keys(localStorage)
+      .filter((key) => key.startsWith("lynn-cellar-wines-") && key !== WINE_STORAGE_KEY)
+      .flatMap((key) => {
+        try {
+          const parsed = JSON.parse(localStorage.getItem(key) || "[]");
+          return Array.isArray(parsed) ? parsed.map(normalizeWine) : [];
+        } catch {
+          return [];
+        }
+      })
+      .filter((wine) => !seedIds.has(wine.id) && !savedIds.has(wine.id));
+    savedWines = [...savedWines, ...legacyWines];
+  }
+
+  return applyCellarPlacement(savedWines.length ? savedWines : seedWines.map(normalizeWine));
 }
 
 function loadArchive() {
@@ -506,6 +514,26 @@ function loadStoredList(key, fallback) {
 
 function saveWines(wines) {
   localStorage.setItem(WINE_STORAGE_KEY, JSON.stringify(wines.map(normalizeWine)));
+}
+
+async function fetchRemoteWines() {
+  const response = await fetch(WINES_API_PATH, { headers: { Accept: "application/json" } });
+  if (!response.ok) throw new Error("Unable to load the shared wine inventory.");
+  const payload = await response.json();
+  return Array.isArray(payload.wines) ? payload.wines.map(normalizeWine) : [];
+}
+
+function saveRemoteWines(wines) {
+  const payload = wines.map(normalizeWine);
+  wineSaveQueue = wineSaveQueue.catch(() => {}).then(async () => {
+    const response = await fetch(WINES_API_PATH, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ wines: payload }),
+    });
+    if (!response.ok) throw new Error("Unable to sync the wine inventory.");
+  });
+  return wineSaveQueue;
 }
 
 function saveArchive(archive) {
@@ -901,6 +929,36 @@ function App() {
   useEffect(() => {
     localStorage.setItem(THEME_STORAGE_KEY, theme);
   }, [theme]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function syncInitialWines() {
+      try {
+        const remoteWines = await fetchRemoteWines();
+        if (cancelled) return;
+        const localWines = loadWines();
+        const remoteIds = new Set(remoteWines.map((wine) => wine.id));
+        const seedIds = new Set(seedWines.map((wine) => wine.id));
+        const shouldRecoverLocalWines = !localStorage.getItem(WINE_REMOTE_MIGRATION_KEY);
+        const recoveredLocalWines = shouldRecoverLocalWines
+          ? localWines.filter((wine) => !seedIds.has(wine.id) && !remoteIds.has(wine.id))
+          : [];
+        const mergedWines = remoteWines.length
+          ? applyCellarPlacement([...remoteWines, ...recoveredLocalWines])
+          : localWines;
+        setWines(mergedWines);
+        saveWines(mergedWines);
+        await saveRemoteWines(mergedWines);
+        localStorage.setItem(WINE_REMOTE_MIGRATION_KEY, "complete");
+      } catch {
+        if (!cancelled) showToast("Using saved wines on this device; shared sync is temporarily unavailable.", null, 5000);
+      }
+    }
+
+    syncInitialWines();
+    return () => { cancelled = true; };
+  }, []);
   const stats = useMemo(() => {
     const bottles = wines.reduce((sum, wine) => sum + Number(wine.quantity || 0), 0);
     const value = wines.reduce((sum, wine) => sum + averagePrice(wine) * Number(wine.quantity || 0), 0);
@@ -933,6 +991,9 @@ function App() {
     const placed = applyCellarPlacement(nextWines);
     setWines(placed);
     saveWines(placed);
+    saveRemoteWines(placed).catch(() => {
+      showToast("Saved on this device; shared sync is temporarily unavailable.", null, 5000);
+    });
     return placed;
   }
 
@@ -941,6 +1002,9 @@ function App() {
     const placed = applyCellarPlacement(snapshot);
     setWines(placed);
     saveWines(placed);
+    saveRemoteWines(placed).catch(() => {
+      showToast("Saved on this device; shared sync is temporarily unavailable.", null, 5000);
+    });
     setPlacementUndo(null);
     showToast("Placement restored.");
   }
