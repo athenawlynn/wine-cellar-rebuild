@@ -49,6 +49,8 @@ const VENDOR_STORAGE_KEY = "lynn-cellar-vendors";
 const MAINTENANCE_STORAGE_KEY = "lynn-cellar-maintenance";
 const EVENT_STORAGE_KEY = "lynn-cellar-events";
 const THEME_STORAGE_KEY = "lynn-cellar-theme";
+const CLOUD_STATE_ENDPOINT = "/api/cellar-state";
+const CLOUD_SYNC_DELAY = 500;
 
 const CELLAR_MODEL = {
   maker: "Allavino",
@@ -894,6 +896,9 @@ function App() {
   const [showPrices, setShowPrices] = useState(true);
   const [placementUndo, setPlacementUndo] = useState(null);
   const toastTimer = useRef(null);
+  const cloudSyncTimer = useRef(null);
+  const cloudHydrated = useRef(false);
+  const skipNextCloudSync = useRef(false);
 
   const activeWine = wines.find((wine) => wine.id === activeWineId) || wines[0];
   const cellarSequence = useMemo(() => cellarOrderedWines(wines), [wines]);
@@ -901,6 +906,86 @@ function App() {
   useEffect(() => {
     localStorage.setItem(THEME_STORAGE_KEY, theme);
   }, [theme]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function hydrateCloudState() {
+      try {
+        const response = await fetch(CLOUD_STATE_ENDPOINT, { headers: { Accept: "application/json" } });
+        if (!response.ok) throw new Error("Cloud state could not be loaded");
+        const result = await response.json();
+        const state = result?.state;
+        if (cancelled || !state || typeof state !== "object") return;
+
+        const hasCloudState = ["wines", "archive", "wishlist", "vendors", "maintenance", "events"]
+          .some((key) => Array.isArray(state[key]));
+        if (!hasCloudState) return;
+
+        skipNextCloudSync.current = true;
+        if (Array.isArray(state.wines)) {
+          const nextWines = applyCellarPlacement(state.wines.map(normalizeWine));
+          setWines(nextWines);
+          saveWines(nextWines);
+        }
+        if (Array.isArray(state.archive)) {
+          const nextArchive = state.archive.map(normalizeArchiveEntry);
+          setArchive(nextArchive);
+          saveArchive(nextArchive);
+        }
+        if (Array.isArray(state.wishlist)) {
+          setWishlist(state.wishlist);
+          saveStoredList(WISHLIST_STORAGE_KEY, state.wishlist);
+        }
+        if (Array.isArray(state.vendors)) {
+          setVendors(state.vendors);
+          saveStoredList(VENDOR_STORAGE_KEY, state.vendors);
+        }
+        if (Array.isArray(state.maintenance)) {
+          setMaintenance(state.maintenance);
+          saveStoredList(MAINTENANCE_STORAGE_KEY, state.maintenance);
+        }
+        if (Array.isArray(state.events)) {
+          setEvents(state.events);
+          saveStoredList(EVENT_STORAGE_KEY, state.events);
+        }
+      } catch {
+        return;
+      } finally {
+        cloudHydrated.current = true;
+      }
+    }
+
+    hydrateCloudState();
+    return () => {
+      cancelled = true;
+      window.clearTimeout(cloudSyncTimer.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!cloudHydrated.current) return;
+    if (skipNextCloudSync.current) {
+      skipNextCloudSync.current = false;
+      return;
+    }
+
+    window.clearTimeout(cloudSyncTimer.current);
+    cloudSyncTimer.current = window.setTimeout(async () => {
+      try {
+        const response = await fetch(CLOUD_STATE_ENDPOINT, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ state: { wines, archive, wishlist, vendors, maintenance, events } }),
+        });
+        if (!response.ok) throw new Error("Cloud state could not be saved");
+      } catch {
+        showToast("Saved locally, but cloud sync failed. Try again shortly.", null, 5000);
+      }
+    }, CLOUD_SYNC_DELAY);
+
+    return () => window.clearTimeout(cloudSyncTimer.current);
+  }, [wines, archive, wishlist, vendors, maintenance, events]);
   const stats = useMemo(() => {
     const bottles = wines.reduce((sum, wine) => sum + Number(wine.quantity || 0), 0);
     const value = wines.reduce((sum, wine) => sum + averagePrice(wine) * Number(wine.quantity || 0), 0);
