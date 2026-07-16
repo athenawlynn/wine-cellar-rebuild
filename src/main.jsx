@@ -49,6 +49,9 @@ const VENDOR_STORAGE_KEY = "lynn-cellar-vendors";
 const MAINTENANCE_STORAGE_KEY = "lynn-cellar-maintenance";
 const EVENT_STORAGE_KEY = "lynn-cellar-events";
 const THEME_STORAGE_KEY = "lynn-cellar-theme";
+const WINE_VERSION_STORAGE_KEY = `${WINE_STORAGE_KEY}-version`;
+const CELLAR_STATE_API = "/api/cellar-state";
+let lastWineStateVersion = 0;
 
 const CELLAR_MODEL = {
   maker: "Allavino",
@@ -467,11 +470,9 @@ function reorderBottlePlacement(wines, sourceInstanceId, target) {
   return applyBottlePlacementRecords(wines, nextRecords);
 }
 
-function loadWines() {
-  const saved = localStorage.getItem(WINE_STORAGE_KEY);
-  if (!saved) return applyCellarPlacement(seedWines);
-  const savedWines = JSON.parse(saved).map(normalizeWine);
+function mergeSavedWines(savedWines) {
   const savedById = new Map(savedWines.map((wine) => [wine.id, wine]));
+  const seedIds = new Set(seedWines.map((wine) => wine.id));
   const mergedSeed = seedWines.map((seedWine) => {
     const savedWine = savedById.get(seedWine.id);
     if (!savedWine) return normalizeWine(seedWine);
@@ -490,7 +491,16 @@ function loadWines() {
       priceEstimate: seedWine.priceEstimate,
     });
   });
-  return applyCellarPlacement(mergedSeed);
+  const addedWines = savedWines.filter((wine) => !seedIds.has(wine.id));
+  return applyCellarPlacement([...mergedSeed, ...addedWines]);
+}
+
+function loadWines() {
+  const storedVersion = Number(localStorage.getItem(WINE_VERSION_STORAGE_KEY) || 0);
+  lastWineStateVersion = Number.isSafeInteger(storedVersion) && storedVersion > 0 ? storedVersion : 0;
+  const saved = localStorage.getItem(WINE_STORAGE_KEY);
+  if (!saved) return applyCellarPlacement(seedWines);
+  return mergeSavedWines(JSON.parse(saved).map(normalizeWine));
 }
 
 function loadArchive() {
@@ -504,8 +514,39 @@ function loadStoredList(key, fallback) {
   return saved ? JSON.parse(saved) : fallback;
 }
 
-function saveWines(wines) {
+function saveWinesLocally(wines, version = lastWineStateVersion) {
   localStorage.setItem(WINE_STORAGE_KEY, JSON.stringify(wines.map(normalizeWine)));
+  localStorage.setItem(WINE_VERSION_STORAGE_KEY, String(version));
+}
+
+function nextWineStateVersion() {
+  lastWineStateVersion = Math.max(lastWineStateVersion + 1, Date.now() * 1000);
+  return lastWineStateVersion;
+}
+
+async function loadRemoteWines() {
+  const response = await fetch(CELLAR_STATE_API, {
+    cache: "no-store",
+    headers: { Accept: "application/json" },
+  });
+  if (!response.ok) throw new Error("Unable to load cellar state.");
+  const data = await response.json();
+  if (!Array.isArray(data.wines)) return null;
+  return {
+    wines: mergeSavedWines(data.wines.map(normalizeWine)),
+    version: Number(data.version || 0),
+  };
+}
+
+async function saveWines(wines) {
+  const version = nextWineStateVersion();
+  saveWinesLocally(wines, version);
+  const response = await fetch(CELLAR_STATE_API, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ wines: wines.map(normalizeWine), version }),
+  });
+  if (!response.ok) throw new Error("Unable to save cellar state.");
 }
 
 function saveArchive(archive) {
@@ -894,6 +935,7 @@ function App() {
   const [showPrices, setShowPrices] = useState(true);
   const [placementUndo, setPlacementUndo] = useState(null);
   const toastTimer = useRef(null);
+  const wineMutationCount = useRef(0);
 
   const activeWine = wines.find((wine) => wine.id === activeWineId) || wines[0];
   const cellarSequence = useMemo(() => cellarOrderedWines(wines), [wines]);
@@ -901,6 +943,28 @@ function App() {
   useEffect(() => {
     localStorage.setItem(THEME_STORAGE_KEY, theme);
   }, [theme]);
+  useEffect(() => {
+    let cancelled = false;
+    const localWines = wines;
+    const initialMutationCount = wineMutationCount.current;
+
+    loadRemoteWines()
+      .then((remoteState) => {
+        if (cancelled || wineMutationCount.current !== initialMutationCount) return;
+        if (remoteState && remoteState.version >= lastWineStateVersion) {
+          lastWineStateVersion = remoteState.version;
+          setWines(remoteState.wines);
+          saveWinesLocally(remoteState.wines, remoteState.version);
+          return;
+        }
+        saveWines(localWines).catch(() => {});
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const stats = useMemo(() => {
     const bottles = wines.reduce((sum, wine) => sum + Number(wine.quantity || 0), 0);
     const value = wines.reduce((sum, wine) => sum + averagePrice(wine) * Number(wine.quantity || 0), 0);
@@ -931,16 +995,18 @@ function App() {
 
   function persistWines(nextWines) {
     const placed = applyCellarPlacement(nextWines);
+    wineMutationCount.current += 1;
     setWines(placed);
-    saveWines(placed);
+    saveWines(placed).catch(() => showToast("Saved on this device, but cloud sync failed."));
     return placed;
   }
 
   function undoPlacement(snapshot = placementUndo) {
     if (!snapshot) return;
     const placed = applyCellarPlacement(snapshot);
+    wineMutationCount.current += 1;
     setWines(placed);
-    saveWines(placed);
+    saveWines(placed).catch(() => showToast("Restored on this device, but cloud sync failed."));
     setPlacementUndo(null);
     showToast("Placement restored.");
   }
