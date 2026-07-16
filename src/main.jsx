@@ -49,6 +49,7 @@ const VENDOR_STORAGE_KEY = "lynn-cellar-vendors";
 const MAINTENANCE_STORAGE_KEY = "lynn-cellar-maintenance";
 const EVENT_STORAGE_KEY = "lynn-cellar-events";
 const THEME_STORAGE_KEY = "lynn-cellar-theme";
+const WINE_API_PATH = "/api/wines";
 
 const CELLAR_MODEL = {
   maker: "Allavino",
@@ -197,6 +198,10 @@ function money(value) {
     currency: "USD",
     maximumFractionDigits: Number(value || 0) % 1 ? 2 : 0,
   }).format(Number(value || 0));
+}
+
+function createWineId() {
+  return `wine-${globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`}`;
 }
 
 function normalizeWine(wine) {
@@ -468,29 +473,18 @@ function reorderBottlePlacement(wines, sourceInstanceId, target) {
 }
 
 function loadWines() {
-  const saved = localStorage.getItem(WINE_STORAGE_KEY);
-  if (!saved) return applyCellarPlacement(seedWines);
-  const savedWines = JSON.parse(saved).map(normalizeWine);
-  const savedById = new Map(savedWines.map((wine) => [wine.id, wine]));
-  const mergedSeed = seedWines.map((seedWine) => {
-    const savedWine = savedById.get(seedWine.id);
-    if (!savedWine) return normalizeWine(seedWine);
-    return normalizeWine({
-      ...savedWine,
-      ...seedWine,
-      cellarOverride: savedWine.cellarOverride ?? seedWine.cellarOverride,
-      zoneOverride: savedWine.zoneOverride ?? seedWine.zoneOverride,
-      placementPriority: savedWine.placementPriority ?? seedWine.placementPriority,
-      bottlePlacements: savedWine.bottlePlacements ?? seedWine.bottlePlacements,
-      archivedAt: savedWine.archivedAt ?? seedWine.archivedAt,
-      archivedReason: savedWine.archivedReason ?? seedWine.archivedReason,
-      status: savedWine.archivedAt ? savedWine.status : seedWine.status ?? savedWine.status,
-      averagePrice: seedWine.averagePrice,
-      estimatedPrice: seedWine.estimatedPrice,
-      priceEstimate: seedWine.priceEstimate,
-    });
-  });
-  return applyCellarPlacement(mergedSeed);
+  try {
+    const saved = localStorage.getItem(WINE_STORAGE_KEY);
+    if (!saved) return applyCellarPlacement(seedWines);
+    const savedWines = JSON.parse(saved).map((wine) => normalizeWine({
+      ...wine,
+      id: typeof wine.id === "string" && wine.id.trim() ? wine.id : createWineId(),
+    }));
+    saveWines(savedWines);
+    return applyCellarPlacement(savedWines);
+  } catch {
+    return applyCellarPlacement(seedWines);
+  }
 }
 
 function loadArchive() {
@@ -506,6 +500,22 @@ function loadStoredList(key, fallback) {
 
 function saveWines(wines) {
   localStorage.setItem(WINE_STORAGE_KEY, JSON.stringify(wines.map(normalizeWine)));
+}
+
+async function fetchSavedWines() {
+  const response = await fetch(WINE_API_PATH);
+  if (!response.ok) throw new Error("Unable to load saved wines");
+  const wines = await response.json();
+  return Array.isArray(wines) ? wines.map(normalizeWine) : [];
+}
+
+async function saveWinesToDatabase(wines) {
+  const response = await fetch(WINE_API_PATH, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ wines: wines.map(normalizeWine) }),
+  });
+  if (!response.ok) throw new Error("Unable to save wines");
 }
 
 function saveArchive(archive) {
@@ -894,6 +904,7 @@ function App() {
   const [showPrices, setShowPrices] = useState(true);
   const [placementUndo, setPlacementUndo] = useState(null);
   const toastTimer = useRef(null);
+  const remoteSaveQueue = useRef(Promise.resolve());
 
   const activeWine = wines.find((wine) => wine.id === activeWineId) || wines[0];
   const cellarSequence = useMemo(() => cellarOrderedWines(wines), [wines]);
@@ -901,6 +912,29 @@ function App() {
   useEffect(() => {
     localStorage.setItem(THEME_STORAGE_KEY, theme);
   }, [theme]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function hydrateWines() {
+      try {
+        const savedWines = await fetchSavedWines();
+        if (cancelled) return;
+        if (savedWines.length) {
+          const placed = applyCellarPlacement(savedWines);
+          setWines(placed);
+          saveWines(placed);
+          return;
+        }
+        await saveWinesToDatabase(wines);
+      } catch {
+        if (!cancelled) showToast("Using wines saved on this device.");
+      }
+    }
+
+    hydrateWines();
+    return () => { cancelled = true; };
+  }, []);
   const stats = useMemo(() => {
     const bottles = wines.reduce((sum, wine) => sum + Number(wine.quantity || 0), 0);
     const value = wines.reduce((sum, wine) => sum + averagePrice(wine) * Number(wine.quantity || 0), 0);
@@ -933,6 +967,10 @@ function App() {
     const placed = applyCellarPlacement(nextWines);
     setWines(placed);
     saveWines(placed);
+    remoteSaveQueue.current = remoteSaveQueue.current
+      .catch(() => {})
+      .then(() => saveWinesToDatabase(placed))
+      .catch(() => showToast("Saved on this device; cloud sync failed."));
     return placed;
   }
 
@@ -941,6 +979,10 @@ function App() {
     const placed = applyCellarPlacement(snapshot);
     setWines(placed);
     saveWines(placed);
+    remoteSaveQueue.current = remoteSaveQueue.current
+      .catch(() => {})
+      .then(() => saveWinesToDatabase(placed))
+      .catch(() => showToast("Restored on this device; cloud sync failed."));
     setPlacementUndo(null);
     showToast("Placement restored.");
   }
@@ -975,7 +1017,7 @@ function App() {
   function upsertWine(draft) {
     const placement = suggestPlacement(wines, draft);
     const nextWine = normalizeWine({
-      id: Math.max(0, ...wines.map((wine) => wine.id)) + 1,
+      id: createWineId(),
       producer: draft.producer || "Unknown producer",
       wineName: draft.wineName || "Unidentified bottle",
       vintage: draft.vintage ? Number(draft.vintage) : null,
@@ -1049,7 +1091,7 @@ function App() {
     if (!entry?.wine) return;
     const archivedWine = normalizeWine(entry.wine);
     const existing = wines.find((wine) => wine.id === archivedWine.id);
-    const restoredId = archivedWine.id || Math.max(0, ...wines.map((wine) => wine.id)) + 1;
+    const restoredId = archivedWine.id || createWineId();
     const nextWines = existing
       ? wines.map((wine) => (
         wine.id === existing.id
