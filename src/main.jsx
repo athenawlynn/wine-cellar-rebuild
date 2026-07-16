@@ -49,6 +49,10 @@ const VENDOR_STORAGE_KEY = "lynn-cellar-vendors";
 const MAINTENANCE_STORAGE_KEY = "lynn-cellar-maintenance";
 const EVENT_STORAGE_KEY = "lynn-cellar-events";
 const THEME_STORAGE_KEY = "lynn-cellar-theme";
+const SYNC_MODIFIED_STORAGE_KEY = "lynn-cellar-sync-modified-at";
+const CLOUD_SYNC_ENDPOINT = "/api/cellar-state";
+const CLOUD_SYNC_DELAY = 500;
+const CLOUD_SYNC_RETRY_DELAYS = [1500, 4000, 10000, 30000];
 
 const CELLAR_MODEL = {
   maker: "Allavino",
@@ -527,6 +531,15 @@ function saveStoredList(key, list) {
   localStorage.setItem(key, JSON.stringify(list));
 }
 
+function writeLocalSnapshot(snapshot) {
+  saveWines(snapshot.wines);
+  saveArchive(snapshot.archive);
+  saveStoredList(WISHLIST_STORAGE_KEY, snapshot.wishlist);
+  saveStoredList(VENDOR_STORAGE_KEY, snapshot.vendors);
+  saveStoredList(MAINTENANCE_STORAGE_KEY, snapshot.maintenance);
+  saveStoredList(EVENT_STORAGE_KEY, snapshot.events);
+}
+
 function zoneLabel(zone) {
   if (zone === "fullRed") return "Red racks";
   return zone === "top" ? "White racks" : "Red racks";
@@ -894,6 +907,11 @@ function App() {
   const [showPrices, setShowPrices] = useState(true);
   const [placementUndo, setPlacementUndo] = useState(null);
   const toastTimer = useRef(null);
+  const syncTimer = useRef(null);
+  const syncRetryTimer = useRef(null);
+  const pendingSync = useRef(null);
+  const syncRetryCount = useRef(0);
+  const syncFailureNotified = useRef(false);
 
   const activeWine = wines.find((wine) => wine.id === activeWineId) || wines[0];
   const cellarSequence = useMemo(() => cellarOrderedWines(wines), [wines]);
@@ -901,6 +919,56 @@ function App() {
   useEffect(() => {
     localStorage.setItem(THEME_STORAGE_KEY, theme);
   }, [theme]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function hydrateCloudState() {
+      try {
+        const response = await fetch(CLOUD_SYNC_ENDPOINT, {
+          headers: { accept: "application/json" },
+        });
+        if (!response.ok) throw new Error(`Cloud state request failed with ${response.status}.`);
+        const result = await response.json();
+        if (cancelled) return;
+
+        const localModifiedAt = Number(localStorage.getItem(SYNC_MODIFIED_STORAGE_KEY) || 0);
+        const cloudUpdatedAt = result.updatedAt ? new Date(result.updatedAt).getTime() : 0;
+        if (!result.state || localModifiedAt > cloudUpdatedAt) {
+          queueCloudSync({ wines, archive, wishlist, vendors, maintenance, events }, false);
+          return;
+        }
+
+        const cloudState = result.state;
+        const nextWines = applyCellarPlacement((cloudState.wines || []).map(normalizeWine));
+        const nextArchive = (cloudState.archive || []).map(normalizeArchiveEntry);
+        const nextSnapshot = {
+          wines: nextWines,
+          archive: nextArchive,
+          wishlist: cloudState.wishlist || [],
+          vendors: cloudState.vendors || [],
+          maintenance: cloudState.maintenance || [],
+          events: cloudState.events || [],
+        };
+        setWines(nextSnapshot.wines);
+        setArchive(nextSnapshot.archive);
+        setWishlist(nextSnapshot.wishlist);
+        setVendors(nextSnapshot.vendors);
+        setMaintenance(nextSnapshot.maintenance);
+        setEvents(nextSnapshot.events);
+        writeLocalSnapshot(nextSnapshot);
+      } catch {
+        if (!cancelled) queueCloudSync({ wines, archive, wishlist, vendors, maintenance, events }, false);
+      }
+    }
+
+    hydrateCloudState();
+    return () => {
+      cancelled = true;
+      window.clearTimeout(syncTimer.current);
+      window.clearTimeout(syncRetryTimer.current);
+    };
+  }, []);
   const stats = useMemo(() => {
     const bottles = wines.reduce((sum, wine) => sum + Number(wine.quantity || 0), 0);
     const value = wines.reduce((sum, wine) => sum + averagePrice(wine) * Number(wine.quantity || 0), 0);
@@ -929,11 +997,55 @@ function App() {
     toastTimer.current = window.setTimeout(() => setToast(null), duration);
   }
 
+  function queueCloudSync(overrides, markModified = true) {
+    const currentSnapshot = pendingSync.current || { wines, archive, wishlist, vendors, maintenance, events };
+    pendingSync.current = { ...currentSnapshot, ...overrides };
+    if (markModified) localStorage.setItem(SYNC_MODIFIED_STORAGE_KEY, String(Date.now()));
+    syncRetryCount.current = 0;
+    window.clearTimeout(syncTimer.current);
+    window.clearTimeout(syncRetryTimer.current);
+    syncTimer.current = window.setTimeout(pushCloudState, CLOUD_SYNC_DELAY);
+  }
+
+  async function pushCloudState() {
+    const snapshot = pendingSync.current;
+    if (!snapshot) return;
+
+    try {
+      const response = await fetch(CLOUD_SYNC_ENDPOINT, {
+        method: "PUT",
+        headers: { "content-type": "application/json", accept: "application/json" },
+        body: JSON.stringify({ state: snapshot }),
+      });
+      if (!response.ok) throw new Error(`Cloud state save failed with ${response.status}.`);
+      if (pendingSync.current === snapshot) pendingSync.current = null;
+      syncRetryCount.current = 0;
+      syncFailureNotified.current = false;
+    } catch {
+      const retryIndex = Math.min(syncRetryCount.current, CLOUD_SYNC_RETRY_DELAYS.length - 1);
+      const retryDelay = CLOUD_SYNC_RETRY_DELAYS[retryIndex];
+      syncRetryCount.current += 1;
+      window.clearTimeout(syncRetryTimer.current);
+      syncRetryTimer.current = window.setTimeout(pushCloudState, retryDelay);
+      if (syncRetryCount.current >= CLOUD_SYNC_RETRY_DELAYS.length && !syncFailureNotified.current) {
+        syncFailureNotified.current = true;
+        showToast("Saved locally. Cloud sync is retrying automatically.", null, 5000);
+      }
+    }
+  }
+
   function persistWines(nextWines) {
     const placed = applyCellarPlacement(nextWines);
     setWines(placed);
     saveWines(placed);
+    queueCloudSync({ wines: placed });
     return placed;
+  }
+
+  function persistArchive(nextArchive) {
+    setArchive(nextArchive);
+    saveArchive(nextArchive);
+    queueCloudSync({ archive: nextArchive });
   }
 
   function undoPlacement(snapshot = placementUndo) {
@@ -941,6 +1053,7 @@ function App() {
     const placed = applyCellarPlacement(snapshot);
     setWines(placed);
     saveWines(placed);
+    queueCloudSync({ wines: placed });
     setPlacementUndo(null);
     showToast("Placement restored.");
   }
@@ -969,6 +1082,13 @@ function App() {
   function updateStoredList(key, setter, nextList, message) {
     setter(nextList);
     saveStoredList(key, nextList);
+    const snapshotKey = {
+      [WISHLIST_STORAGE_KEY]: "wishlist",
+      [VENDOR_STORAGE_KEY]: "vendors",
+      [MAINTENANCE_STORAGE_KEY]: "maintenance",
+      [EVENT_STORAGE_KEY]: "events",
+    }[key];
+    if (snapshotKey) queueCloudSync({ [snapshotKey]: nextList });
     showToast(message);
   }
 
@@ -1037,8 +1157,7 @@ function App() {
       })
       : wines.filter((item) => item.id !== id);
     const placed = persistWines(nextWines);
-    setArchive(nextArchive);
-    saveArchive(nextArchive);
+    persistArchive(nextArchive);
     setActiveWineId(placed[0]?.id);
     setView("archive");
     showToast("Bottle archived in drink history.");
@@ -1068,8 +1187,7 @@ function App() {
       ];
     persistWines(nextWines);
     const nextArchive = archive.filter((item) => item.id !== entryId);
-    setArchive(nextArchive);
-    saveArchive(nextArchive);
+    persistArchive(nextArchive);
     setActiveWineId(existing?.id || restoredId);
     setView("detail");
     showToast("Bottle restored to the cellar.");
