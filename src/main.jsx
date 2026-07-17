@@ -2742,8 +2742,22 @@ function parseCriticRatings(value) {
 }
 
 function WineForm({ draft, setDraft, includeNotes = false }) {
+  const [photoStatus, setPhotoStatus] = useState({ frontPhoto: "idle", backPhoto: "idle" });
+
   function setField(key, value) {
     setDraft((current) => ({ ...current, [key]: value }));
+  }
+
+  async function handlePhotoUpload(field, file) {
+    if (!file) return;
+    setPhotoStatus((current) => ({ ...current, [field]: "uploading" }));
+    try {
+      const stored = await uploadPhoto(file);
+      setField(field, stored);
+      setPhotoStatus((current) => ({ ...current, [field]: "done" }));
+    } catch {
+      setPhotoStatus((current) => ({ ...current, [field]: "error" }));
+    }
   }
 
   function setRegion(value) {
@@ -2791,13 +2805,35 @@ function WineForm({ draft, setDraft, includeNotes = false }) {
           <div className="form-section wide">
             <h3>Photos & Source</h3>
             <div className="form-grid compact">
-              <label>Front Photo Filename<input value={draft.frontPhoto} onChange={(event) => setField("frontPhoto", event.target.value)} placeholder="IMG_8633.jpg" /></label>
-              <label>Back Photo Filename<input value={draft.backPhoto} onChange={(event) => setField("backPhoto", event.target.value)} placeholder="IMG_8634.jpg" /></label>
+              <div>
+                <label>
+                  Front Photo
+                  {draft.frontPhoto && <img src={photoUrl(draft.frontPhoto)} alt="Front label" style={{ maxHeight: 120, borderRadius: 8, margin: "4px 0" }} />}
+                  <input value={draft.frontPhoto} onChange={(event) => setField("frontPhoto", event.target.value)} placeholder="IMG_8633.jpg or upload below" />
+                </label>
+                <label className="file-button">
+                  {photoStatus.frontPhoto === "uploading" ? "Uploading..." : "Upload front photo"}
+                  <input type="file" accept="image/*" capture="environment" onChange={(event) => handlePhotoUpload("frontPhoto", event.target.files?.[0])} />
+                </label>
+                {photoStatus.frontPhoto === "error" && <small>Upload failed, try again.</small>}
+              </div>
+              <div>
+                <label>
+                  Back Photo
+                  {draft.backPhoto && <img src={photoUrl(draft.backPhoto)} alt="Back label" style={{ maxHeight: 120, borderRadius: 8, margin: "4px 0" }} />}
+                  <input value={draft.backPhoto} onChange={(event) => setField("backPhoto", event.target.value)} placeholder="IMG_8634.jpg or upload below" />
+                </label>
+                <label className="file-button">
+                  {photoStatus.backPhoto === "uploading" ? "Uploading..." : "Upload back photo"}
+                  <input type="file" accept="image/*" capture="environment" onChange={(event) => handlePhotoUpload("backPhoto", event.target.files?.[0])} />
+                </label>
+                {photoStatus.backPhoto === "error" && <small>Upload failed, try again.</small>}
+              </div>
               <label className="wide">Source URL<input value={draft.sourceUrl} onChange={(event) => setField("sourceUrl", event.target.value)} placeholder="https://..." /></label>
               <label>Date Added<input type="date" value={draft.dateAdded} onChange={(event) => setField("dateAdded", event.target.value)} /></label>
               <label>Automatic Location<input value={`${draft.cellar === 1 ? "Left Cellar" : "Right Cellar"} · ${getSlotMeta(draft.zone, draft.slot).slotLabel}`} disabled /></label>
             </div>
-            <p className="form-note">Location is recalculated from price and wine type when you save.</p>
+            <p className="form-note">Location is recalculated from price and wine type when you save. Upload a photo, or type an exact filename if it's already in the photo library.</p>
           </div>
           <label className="wide">How Acquired<textarea value={draft.acquiredNotes} onChange={(event) => setField("acquiredNotes", event.target.value)} /></label>
           <label className="wide">Vineyard / Producer Notes<textarea value={draft.vineyardNotes} onChange={(event) => setField("vineyardNotes", event.target.value)} /></label>
