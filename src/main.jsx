@@ -478,9 +478,20 @@ function loadStoredList(key, fallback) {
   return saved ? JSON.parse(saved) : fallback;
 }
 
+async function describeFailedResponse(response) {
+  const body = await response.text().catch(() => "");
+  try {
+    const parsed = JSON.parse(body);
+    if (parsed?.error) return parsed.error;
+  } catch {
+    // not JSON, fall through to raw body
+  }
+  return body || `HTTP ${response.status}`;
+}
+
 async function fetchRemoteList(path) {
   const response = await fetch(path);
-  if (!response.ok) throw new Error(`Failed to load ${path}: ${response.status}`);
+  if (!response.ok) throw new Error(`Failed to load ${path}: ${await describeFailedResponse(response)}`);
   return response.json();
 }
 
@@ -490,7 +501,7 @@ async function putRemoteList(path, list) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(list),
   });
-  if (!response.ok) throw new Error(`Failed to save ${path}: ${response.status}`);
+  if (!response.ok) throw new Error(`Failed to save ${path}: ${await describeFailedResponse(response)}`);
 }
 
 function fetchWinesRemote() {
@@ -938,8 +949,8 @@ function App() {
           setArchive(remoteArchive.map(normalizeArchiveEntry));
         }
       })
-      .catch(() => {
-        if (!cancelled) showToast("Could not reach the cellar database. Showing local defaults.");
+      .catch((err) => {
+        if (!cancelled) showToast(`Database load failed: ${err.message}`, null, 12000);
       });
     return () => {
       cancelled = true;
@@ -949,7 +960,7 @@ function App() {
   function persistWines(nextWines) {
     const placed = applyCellarPlacement(nextWines);
     setWines(placed);
-    saveWines(placed).catch(() => showToast("Change saved locally but failed to sync to the server."));
+    saveWines(placed).catch((err) => showToast(`Sync failed: ${err.message}`, null, 12000));
     return placed;
   }
 
@@ -1055,7 +1066,7 @@ function App() {
       : wines.filter((item) => item.id !== id);
     const placed = persistWines(nextWines);
     setArchive(nextArchive);
-    saveArchive(nextArchive).catch(() => showToast("Archived locally but failed to sync to the server."));
+    saveArchive(nextArchive).catch((err) => showToast(`Sync failed: ${err.message}`, null, 12000));
     setActiveWineId(placed[0]?.id);
     setView("archive");
     showToast("Bottle archived in drink history.");
@@ -1086,7 +1097,7 @@ function App() {
     persistWines(nextWines);
     const nextArchive = archive.filter((item) => item.id !== entryId);
     setArchive(nextArchive);
-    saveArchive(nextArchive).catch(() => showToast("Restored locally but failed to sync to the server."));
+    saveArchive(nextArchive).catch((err) => showToast(`Sync failed: ${err.message}`, null, 12000));
     setActiveWineId(existing?.id || restoredId);
     setView("detail");
     showToast("Bottle restored to the cellar.");
