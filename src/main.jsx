@@ -42,8 +42,6 @@ import "./styles.css";
 import LuxuryCellarBook from "./LuxuryCellarBook.jsx";
 const BRAND_NAME = "Lynn Cave Privée";
 const PHOTO_BASE = "/photos/";
-const WINE_STORAGE_KEY = "lynn-cellar-wines-2026-06-23-austin-hope-grouped";
-const ARCHIVE_STORAGE_KEY = "lynn-cellar-archive-2026-05-02-inventory";
 const WISHLIST_STORAGE_KEY = "lynn-cellar-wishlist";
 const VENDOR_STORAGE_KEY = "lynn-cellar-vendors";
 const MAINTENANCE_STORAGE_KEY = "lynn-cellar-maintenance";
@@ -468,35 +466,11 @@ function reorderBottlePlacement(wines, sourceInstanceId, target) {
 }
 
 function loadWines() {
-  const saved = localStorage.getItem(WINE_STORAGE_KEY);
-  if (!saved) return applyCellarPlacement(seedWines);
-  const savedWines = JSON.parse(saved).map(normalizeWine);
-  const savedById = new Map(savedWines.map((wine) => [wine.id, wine]));
-  const mergedSeed = seedWines.map((seedWine) => {
-    const savedWine = savedById.get(seedWine.id);
-    if (!savedWine) return normalizeWine(seedWine);
-    return normalizeWine({
-      ...savedWine,
-      ...seedWine,
-      cellarOverride: savedWine.cellarOverride ?? seedWine.cellarOverride,
-      zoneOverride: savedWine.zoneOverride ?? seedWine.zoneOverride,
-      placementPriority: savedWine.placementPriority ?? seedWine.placementPriority,
-      bottlePlacements: savedWine.bottlePlacements ?? seedWine.bottlePlacements,
-      archivedAt: savedWine.archivedAt ?? seedWine.archivedAt,
-      archivedReason: savedWine.archivedReason ?? seedWine.archivedReason,
-      status: savedWine.archivedAt ? savedWine.status : seedWine.status ?? savedWine.status,
-      averagePrice: seedWine.averagePrice,
-      estimatedPrice: seedWine.estimatedPrice,
-      priceEstimate: seedWine.priceEstimate,
-    });
-  });
-  return applyCellarPlacement(mergedSeed);
+  return applyCellarPlacement(seedWines);
 }
 
 function loadArchive() {
-  const saved = localStorage.getItem(ARCHIVE_STORAGE_KEY);
-  const archive = saved ? JSON.parse(saved) : seedArchive;
-  return archive.map(normalizeArchiveEntry);
+  return seedArchive.map(normalizeArchiveEntry);
 }
 
 function loadStoredList(key, fallback) {
@@ -504,12 +478,35 @@ function loadStoredList(key, fallback) {
   return saved ? JSON.parse(saved) : fallback;
 }
 
+async function fetchRemoteList(path) {
+  const response = await fetch(path);
+  if (!response.ok) throw new Error(`Failed to load ${path}: ${response.status}`);
+  return response.json();
+}
+
+async function putRemoteList(path, list) {
+  const response = await fetch(path, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(list),
+  });
+  if (!response.ok) throw new Error(`Failed to save ${path}: ${response.status}`);
+}
+
+function fetchWinesRemote() {
+  return fetchRemoteList("/api/wines");
+}
+
 function saveWines(wines) {
-  localStorage.setItem(WINE_STORAGE_KEY, JSON.stringify(wines.map(normalizeWine)));
+  return putRemoteList("/api/wines", wines.map(normalizeWine));
+}
+
+function fetchArchiveRemote() {
+  return fetchRemoteList("/api/archive");
 }
 
 function saveArchive(archive) {
-  localStorage.setItem(ARCHIVE_STORAGE_KEY, JSON.stringify(archive.map(normalizeArchiveEntry)));
+  return putRemoteList("/api/archive", archive.map(normalizeArchiveEntry));
 }
 
 function normalizeArchiveEntry(entry) {
@@ -929,10 +926,30 @@ function App() {
     toastTimer.current = window.setTimeout(() => setToast(null), duration);
   }
 
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all([fetchWinesRemote(), fetchArchiveRemote()])
+      .then(([remoteWines, remoteArchive]) => {
+        if (cancelled) return;
+        if (Array.isArray(remoteWines) && remoteWines.length) {
+          setWines(applyCellarPlacement(remoteWines));
+        }
+        if (Array.isArray(remoteArchive) && remoteArchive.length) {
+          setArchive(remoteArchive.map(normalizeArchiveEntry));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) showToast("Could not reach the cellar database. Showing local defaults.");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   function persistWines(nextWines) {
     const placed = applyCellarPlacement(nextWines);
     setWines(placed);
-    saveWines(placed);
+    saveWines(placed).catch(() => showToast("Change saved locally but failed to sync to the server."));
     return placed;
   }
 
@@ -1038,7 +1055,7 @@ function App() {
       : wines.filter((item) => item.id !== id);
     const placed = persistWines(nextWines);
     setArchive(nextArchive);
-    saveArchive(nextArchive);
+    saveArchive(nextArchive).catch(() => showToast("Archived locally but failed to sync to the server."));
     setActiveWineId(placed[0]?.id);
     setView("archive");
     showToast("Bottle archived in drink history.");
@@ -1069,7 +1086,7 @@ function App() {
     persistWines(nextWines);
     const nextArchive = archive.filter((item) => item.id !== entryId);
     setArchive(nextArchive);
-    saveArchive(nextArchive);
+    saveArchive(nextArchive).catch(() => showToast("Restored locally but failed to sync to the server."));
     setActiveWineId(existing?.id || restoredId);
     setView("detail");
     showToast("Bottle restored to the cellar.");
