@@ -1,11 +1,16 @@
 import { getSql, ensureSchema, readList, writeList } from "./_db.js";
+import seedArchive from "../../src/data/archive.json";
 
 export default async (req) => {
   const sql = getSql();
   await ensureSchema(sql);
 
   if (req.method === "GET") {
-    const archive = await readList(sql, "archive");
+    let archive = await readList(sql, "archive");
+    if (!archive.length) {
+      archive = seedArchive;
+      await writeList(sql, "archive", archive);
+    }
     return Response.json(archive);
   }
 

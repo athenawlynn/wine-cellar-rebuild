@@ -1,11 +1,16 @@
 import { getSql, ensureSchema, readList, writeList } from "./_db.js";
+import seedWines from "../../src/data/wines.json";
 
 export default async (req) => {
   const sql = getSql();
   await ensureSchema(sql);
 
   if (req.method === "GET") {
-    const wines = await readList(sql, "wines");
+    let wines = await readList(sql, "wines");
+    if (!wines.length) {
+      wines = seedWines;
+      await writeList(sql, "wines", wines);
+    }
     return Response.json(wines);
   }
 
