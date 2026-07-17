@@ -587,7 +587,26 @@ function wineTitle(wine) {
 }
 
 function photoUrl(photo) {
-  return photo ? `${PHOTO_BASE}${photo}` : "";
+  if (!photo) return "";
+  if (photo.startsWith("blob-key:")) return `/api/photos?key=${photo.slice("blob-key:".length)}`;
+  return `${PHOTO_BASE}${photo}`;
+}
+
+async function uploadPhoto(file) {
+  const dataUrl = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error("Could not read the selected file."));
+    reader.readAsDataURL(file);
+  });
+  const response = await fetch("/api/photos", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ data: dataUrl, contentType: file.type }),
+  });
+  if (!response.ok) throw new Error(`Photo upload failed: ${response.status}`);
+  const { key } = await response.json();
+  return `blob-key:${key}`;
 }
 
 function regionName(wine) {
@@ -1003,7 +1022,7 @@ function App() {
   function upsertWine(draft) {
     const placement = suggestPlacement(wines, draft);
     const nextWine = normalizeWine({
-      id: Math.max(0, ...wines.map((wine) => wine.id)) + 1,
+      id: crypto.randomUUID(),
       producer: draft.producer || "Unknown producer",
       wineName: draft.wineName || "Unidentified bottle",
       vintage: draft.vintage ? Number(draft.vintage) : null,
@@ -1017,8 +1036,8 @@ function App() {
       averagePrice: Number(draft.estimatedPrice || 0),
       notes: draft.notes || "Added from scan flow.",
       acquiredNotes: draft.acquiredNotes || "",
-      frontPhoto: "",
-      backPhoto: "",
+      frontPhoto: draft.frontPhoto || "",
+      backPhoto: draft.backPhoto || "",
       status: "Ready",
       cellar: placement.cellar,
       zone: placement.zone,
@@ -1077,7 +1096,7 @@ function App() {
     if (!entry?.wine) return;
     const archivedWine = normalizeWine(entry.wine);
     const existing = wines.find((wine) => wine.id === archivedWine.id);
-    const restoredId = archivedWine.id || Math.max(0, ...wines.map((wine) => wine.id)) + 1;
+    const restoredId = archivedWine.id || crypto.randomUUID();
     const nextWines = existing
       ? wines.map((wine) => (
         wine.id === existing.id
@@ -2872,6 +2891,7 @@ function ScanDrawer({ wines, onClose, onSave }) {
   });
   const [cameraActive, setCameraActive] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [photoStatus, setPhotoStatus] = useState("idle");
   const videoRef = useRef(null);
 
   const placement = useMemo(() => suggestPlacement(wines, draft), [wines, draft]);
@@ -2886,6 +2906,19 @@ function ScanDrawer({ wines, onClose, onSave }) {
     const stream = videoRef.current?.srcObject;
     stream?.getTracks().forEach((track) => track.stop());
     setCameraActive(false);
+  }
+
+  async function handlePhotoSelect(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setPhotoStatus("uploading");
+    try {
+      const stored = await uploadPhoto(file);
+      setDraft((current) => ({ ...current, frontPhoto: stored }));
+      setPhotoStatus("done");
+    } catch {
+      setPhotoStatus("error");
+    }
   }
 
   function submit(event) {
@@ -2911,11 +2944,21 @@ function ScanDrawer({ wines, onClose, onSave }) {
         </div>
 
         <div className="camera-box">
-          {cameraActive ? <video ref={videoRef} autoPlay playsInline /> : <div><Camera size={34} /><p>{mode === "label" ? "Capture the front or back label." : "Point at a barcode."}</p></div>}
+          {draft.frontPhoto ? (
+            <img src={photoUrl(draft.frontPhoto)} alt="Selected bottle" style={{ maxHeight: 160, borderRadius: 8 }} />
+          ) : cameraActive ? (
+            <video ref={videoRef} autoPlay playsInline />
+          ) : (
+            <div><Camera size={34} /><p>{mode === "label" ? "Capture the front or back label." : "Point at a barcode."}</p></div>
+          )}
           <div className="scan-stack">
             <button type="button" onClick={cameraActive ? stopCamera : startCamera}>{cameraActive ? "Stop camera" : "Use camera"}</button>
-            <label className="file-button">Upload photo<input type="file" accept="image/*" capture="environment" /></label>
+            <label className="file-button">
+              {photoStatus === "uploading" ? "Uploading..." : "Upload photo"}
+              <input type="file" accept="image/*" capture="environment" onChange={handlePhotoSelect} />
+            </label>
           </div>
+          {photoStatus === "error" && <p className="form-note">Photo upload failed. You can still save the wine without a photo.</p>}
         </div>
 
         <form onSubmit={submit}>
