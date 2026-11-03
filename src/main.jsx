@@ -61,24 +61,24 @@ const CELLAR_MODEL = {
 
 const COOLER_LAYOUT = {
   top: [
-    { rack: 1, capacity: 8 },
-    { rack: 2, capacity: 8 },
-    { rack: 3, capacity: 8 },
+    { rack: 1, capacity: 10 },
+    { rack: 2, capacity: 10 },
+    { rack: 3, capacity: 10 },
   ],
   bottom: [
-    { rack: 1, capacity: 8 },
-    { rack: 2, capacity: 8 },
-    { rack: 3, capacity: 8 },
+    { rack: 1, capacity: 10 },
+    { rack: 2, capacity: 10 },
+    { rack: 3, capacity: 10 },
   ],
 };
 
 const FULL_RED_LAYOUT = [
-  { rack: 1, capacity: 8 },
-  { rack: 2, capacity: 8 },
-  { rack: 3, capacity: 8 },
-  { rack: 4, capacity: 8 },
-  { rack: 5, capacity: 8 },
-  { rack: 6, capacity: 8 },
+  { rack: 1, capacity: 10 },
+  { rack: 2, capacity: 10 },
+  { rack: 3, capacity: 10 },
+  { rack: 4, capacity: 10 },
+  { rack: 5, capacity: 10 },
+  { rack: 6, capacity: 10 },
 ];
 
 const CELLAR_CAPACITY = [...COOLER_LAYOUT.top, ...COOLER_LAYOUT.bottom].reduce((sum, rack) => sum + rack.capacity, 0);
@@ -550,22 +550,22 @@ function zoneCapacity(zone) {
 
 function getSlotMeta(zone, slot) {
   let remaining = slot;
-  const prefix = zone === "top" ? "W" : "R";
-  const rackType = zone === "top" ? "White" : "Red";
   for (const rack of racksForZone(zone)) {
     if (remaining <= rack.capacity) {
+      const displayRack = zone === "top" ? rack.rack : zone === "bottom" ? rack.rack + 3 : rack.rack + 6;
       return {
         rack: rack.rack,
+        displayRack,
         position: remaining,
         capacity: rack.capacity,
-        label: `${rackType} ${rack.rack}`,
-        slotLabel: `${rackType} ${rack.rack} · Slot ${remaining}`,
-        shortLabel: `${prefix}${rack.rack}-${remaining}`,
+        label: `Rack ${displayRack}`,
+        slotLabel: `Rack ${displayRack} · Slot ${remaining}`,
+        shortLabel: `R${displayRack}-${remaining}`,
       };
     }
     remaining -= rack.capacity;
   }
-  return { rack: null, position: slot, capacity: zoneCapacity(zone), label: "Overflow", slotLabel: "Overflow", shortLabel: `${prefix}+${slot}` };
+  return { rack: null, displayRack: null, position: slot, capacity: zoneCapacity(zone), label: "Overflow", slotLabel: "Overflow", shortLabel: `R+${slot}` };
 }
 
 function suggestPlacement(wines, draft) {
@@ -1906,7 +1906,7 @@ function CellarRules() {
     ["Left", "All whites", "White, sparkling, rosé, and dessert bottles live in the left cellar."],
     ["Value reds", "$50 and under", "Reds priced at $50 or less stay in the left cellar under the whites."],
     ["Right", "$50+ reds", "The right cellar is now six racks of red wine priced above $50."],
-    ["Slots", "8 per rack", "Each rack row has eight bottle positions from left to right."],
+    ["Slots", "10 per rack", "Each physical rack has ten staggered bottle positions."],
     ["Order", "Low to high price", "Within each zone, bottles are sorted from lowest price to highest price."],
     ["Move", "Click or drag", "Click a filled slot to pick it up, then click any destination slot to move or swap."],
   ];
@@ -1926,7 +1926,6 @@ function CellarRules() {
 function Zone({ title, cellar, zone, wines, openWine, showPrices, searchQuery = "", draggingInstanceId, selectedInstanceId, setDraggingInstanceId, setSelectedInstanceId, dropTarget, setDropTarget, handleSlotDrop, handleSlotSelect }) {
   const bottleSlots = cellarBottleRecords(wines).filter((record) => record.cellar === cellar && record.zone === zone);
   const zoneWines = wines.filter((wine) => bottleSlots.some((bottle) => bottle.wineId === wine.id));
-  const rackType = zone === "top" ? "White" : "Red";
   const racks = racksForZone(zone);
   const capacity = zoneCapacity(zone);
   const overflowBottles = bottleSlots.filter((item) => item.slot > capacity);
@@ -1940,7 +1939,7 @@ function Zone({ title, cellar, zone, wines, openWine, showPrices, searchQuery = 
       <div className="zone-heading">
         <div>
           <h3>{title}</h3>
-          <p>{racks.length} racks · 8 slots each</p>
+          <p>{racks.length} racks · 10 slots each</p>
         </div>
         <Thermometer size={18} />
       </div>
@@ -1958,11 +1957,12 @@ function Zone({ title, cellar, zone, wines, openWine, showPrices, searchQuery = 
       <div className="rack-stack">
         {racks.map((rack, rackIndex) => {
           const slotOffset = racks.slice(0, rackIndex).reduce((sum, item) => sum + item.capacity, 0);
+          const displayRack = zone === "top" ? rack.rack : zone === "bottom" ? rack.rack + 3 : rack.rack + 6;
           return (
             <div className="rack-row" key={`${zone}-${rack.rack}`}>
               <div className="rack-label">
-                <strong>{rackType} {rack.rack}</strong>
-                <span>8 slots</span>
+                <strong>Rack {displayRack}</strong>
+                <span>10 slots</span>
               </div>
               <div className="slot-grid">
                 {Array.from({ length: rack.capacity }, (_, index) => {
