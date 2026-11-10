@@ -2538,11 +2538,11 @@ function PhotoBrowser({ wines, openWine }) {
       return Number(a.cellar || 0) - Number(b.cellar || 0) || String(a.zone || "").localeCompare(String(b.zone || "")) || Number(a.slot || 0) - Number(b.slot || 0);
     }), [photoWines, photoFilters]);
 
-  const visiblePhotoCount = filtered.reduce((sum, wine) => (
-    sum
-    + (photoFilters.view !== "Back" && wine.frontPhoto ? 1 : 0)
-    + (photoFilters.view !== "Front" && wine.backPhoto ? 1 : 0)
-  ), 0);
+  const visiblePhotos = useMemo(() => filtered.flatMap((wine) => [
+    photoFilters.view !== "Back" && wine.frontPhoto ? { wine, label: "Front", photo: wine.frontPhoto } : null,
+    photoFilters.view !== "Front" && wine.backPhoto ? { wine, label: "Back", photo: wine.backPhoto } : null,
+  ].filter(Boolean)), [filtered, photoFilters.view]);
+  const visiblePhotoCount = visiblePhotos.length;
   const totalPhotoCount = photoWines.reduce((sum, wine) => sum + Number(Boolean(wine.frontPhoto)) + Number(Boolean(wine.backPhoto)), 0);
 
   function setPhotoFilter(key, value) {
@@ -2563,7 +2563,7 @@ function PhotoBrowser({ wines, openWine }) {
         </div>
         <div className="photo-browser-stats">
           <strong>{totalPhotoCount}</strong>
-          <span>photos across {photoWines.length} wines</span>
+          <span>bottle photos across {photoWines.length} wine records</span>
         </div>
       </section>
 
@@ -2590,27 +2590,20 @@ function PhotoBrowser({ wines, openWine }) {
       <div className="photo-browser-heading">
         <div>
           <p className="eyebrow">Filtered gallery</p>
-          <h2>{visiblePhotoCount} photo{visiblePhotoCount === 1 ? "" : "s"}</h2>
+          <h2>{visiblePhotoCount} bottle photo{visiblePhotoCount === 1 ? "" : "s"}</h2>
         </div>
         <span>{filtered.length} wine record{filtered.length === 1 ? "" : "s"}</span>
       </div>
 
-      {filtered.length ? (
+      {visiblePhotos.length ? (
         <div className="photo-browser-grid">
-          {filtered.map((wine) => {
-            const photos = [
-              photoFilters.view !== "Back" && wine.frontPhoto ? { label: "Front", photo: wine.frontPhoto } : null,
-              photoFilters.view !== "Front" && wine.backPhoto ? { label: "Back", photo: wine.backPhoto } : null,
-            ].filter(Boolean);
-            return (
-              <article className="photo-wine-card" key={wine.id}>
-                <button className={`photo-wine-images ${photos.length === 1 ? "single" : ""}`} type="button" onClick={() => openWine(wine.id)} aria-label={`Open ${wineTitle(wine)}`}>
-                  {photos.map(({ label, photo }) => (
-                    <span className="photo-wine-image" key={`${wine.id}-${label}`}>
-                      <img src={photoUrl(photo)} alt={`${wineTitle(wine)} ${label.toLowerCase()} bottle`} loading="lazy" />
-                      <small>{label}</small>
-                    </span>
-                  ))}
+          {visiblePhotos.map(({ wine, label, photo }) => (
+              <article className="photo-wine-card" key={`${wine.id}-${label}`}>
+                <button className="photo-wine-images single" type="button" onClick={() => openWine(wine.id)} aria-label={`Open ${wineTitle(wine)} ${label.toLowerCase()} photo`}>
+                  <span className="photo-wine-image">
+                    <img src={photoUrl(photo)} alt={`${wineTitle(wine)} ${label.toLowerCase()} bottle`} loading="lazy" />
+                    <small>{label}</small>
+                  </span>
                 </button>
                 <button className="photo-wine-copy" type="button" onClick={() => openWine(wine.id)}>
                   <span>{[wine.category, wine.country].filter(Boolean).join(" · ")}</span>
@@ -2620,8 +2613,7 @@ function PhotoBrowser({ wines, openWine }) {
                   <small>Qty {wine.quantity} · {wine.cellar === 1 ? "Left" : "Right"} cellar · {getSlotMeta(wine.zone, wine.slot).slotLabel}</small>
                 </button>
               </article>
-            );
-          })}
+          ))}
         </div>
       ) : (
         <EmptyState title="No bottle photos match" body="Reset a filter or try a broader search." />
