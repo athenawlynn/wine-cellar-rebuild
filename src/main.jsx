@@ -1154,6 +1154,7 @@ function App() {
           <NavButton icon={<LayoutGrid />} active={view === "dashboard"} onClick={() => setView("dashboard")}>Overview</NavButton>
           <NavButton icon={<Wine />} active={view === "cellars"} onClick={() => setView("cellars")}>Cellars</NavButton>
           <NavButton icon={<Grape />} active={view === "collection"} onClick={() => setView("collection")}>Wines</NavButton>
+          <NavButton icon={<Camera />} active={view === "photos"} onClick={() => setView("photos")}>Photos</NavButton>
           <NavButton icon={<Sparkles />} active={view === "tools"} onClick={() => setView("tools")}>Tools</NavButton>
           <NavButton icon={<ClipboardList />} active={view === "specs"} onClick={() => setView("specs")}>Specs</NavButton>
           <NavButton icon={<Printer />} active={view === "print"} onClick={() => setView("print")}>Cellar Book</NavButton>
@@ -1197,6 +1198,7 @@ function App() {
             openWine={(id) => { setActiveWineId(id); setView("detail"); }}
           />
         )}
+        {view === "photos" && <PhotoBrowser wines={wines} openWine={(id) => { setActiveWineId(id); setView("detail"); }} />}
         {view === "tools" && (
           <CellarTools
             activeTab={toolTab}
@@ -1252,6 +1254,7 @@ function App() {
 function topbarTitle(view) {
   if (view === "dashboard") return BRAND_NAME;
   if (view === "cellars") return "Cellar Map";
+  if (view === "photos") return "Photo Browser";
   if (view === "tools") return "Cellar Tools";
   if (view === "detail") return "Bottle Details";
   if (view === "specs") return "Cellar Specs";
@@ -2494,6 +2497,132 @@ function Collection({ wines, filters, setFilters, openWine }) {
         </div>
       ) : (
         <EmptyState title="No wines match those filters" body="Clear a field or add a bottle from the scan flow." />
+      )}
+    </div>
+  );
+}
+
+function PhotoBrowser({ wines, openWine }) {
+  const [photoFilters, setPhotoFilters] = useState({
+    text: "",
+    category: "All",
+    country: "All",
+    region: "All",
+    producer: "All",
+    view: "All",
+    sort: "location",
+  });
+  const photoWines = useMemo(() => wines.filter((wine) => wine.frontPhoto || wine.backPhoto), [wines]);
+  const categories = ["All", ...Array.from(new Set(photoWines.map((wine) => wine.category).filter(Boolean))).sort()];
+  const countries = ["All", ...Array.from(new Set(photoWines.map((wine) => wine.country).filter(Boolean))).sort()];
+  const regions = ["All", ...Array.from(new Set(photoWines.map((wine) => wine.region).filter(Boolean))).sort()];
+  const producers = ["All", ...Array.from(new Set(photoWines.map((wine) => wine.producer).filter(Boolean))).sort()];
+
+  const filtered = useMemo(() => photoWines
+    .filter((wine) => {
+      const viewMatch = photoFilters.view === "All"
+        || (photoFilters.view === "Front" && wine.frontPhoto)
+        || (photoFilters.view === "Back" && wine.backPhoto);
+      return viewMatch
+        && (!photoFilters.text || wineSearchText(wine).includes(photoFilters.text.toLowerCase()))
+        && (photoFilters.category === "All" || wine.category === photoFilters.category)
+        && (photoFilters.country === "All" || wine.country === photoFilters.country)
+        && (photoFilters.region === "All" || wine.region === photoFilters.region)
+        && (photoFilters.producer === "All" || wine.producer === photoFilters.producer);
+    })
+    .sort((a, b) => {
+      if (photoFilters.sort === "name") return wineTitle(a).localeCompare(wineTitle(b));
+      if (photoFilters.sort === "vintage") return Number(b.vintage || 0) - Number(a.vintage || 0);
+      if (photoFilters.sort === "region") return String(a.region || "").localeCompare(String(b.region || "")) || wineTitle(a).localeCompare(wineTitle(b));
+      return Number(a.cellar || 0) - Number(b.cellar || 0) || String(a.zone || "").localeCompare(String(b.zone || "")) || Number(a.slot || 0) - Number(b.slot || 0);
+    }), [photoWines, photoFilters]);
+
+  const visiblePhotoCount = filtered.reduce((sum, wine) => (
+    sum
+    + (photoFilters.view !== "Back" && wine.frontPhoto ? 1 : 0)
+    + (photoFilters.view !== "Front" && wine.backPhoto ? 1 : 0)
+  ), 0);
+  const totalPhotoCount = photoWines.reduce((sum, wine) => sum + Number(Boolean(wine.frontPhoto)) + Number(Boolean(wine.backPhoto)), 0);
+
+  function setPhotoFilter(key, value) {
+    setPhotoFilters((current) => ({ ...current, [key]: value }));
+  }
+
+  function resetPhotoFilters() {
+    setPhotoFilters({ text: "", category: "All", country: "All", region: "All", producer: "All", view: "All", sort: "location" });
+  }
+
+  return (
+    <div className="photo-browser-page">
+      <section className="photo-browser-intro work-panel">
+        <div>
+          <p className="eyebrow">Visual collection</p>
+          <h2>Browse the cellar by label</h2>
+          <p>Filter bottle photography by wine type, country, region, or producer. Select any image to open its complete wine record.</p>
+        </div>
+        <div className="photo-browser-stats">
+          <strong>{totalPhotoCount}</strong>
+          <span>photos across {photoWines.length} wines</span>
+        </div>
+      </section>
+
+      <section className="photo-filter-panel work-panel">
+        <div className="search-row">
+          <Search size={18} />
+          <input
+            value={photoFilters.text}
+            onChange={(event) => setPhotoFilter("text", event.target.value)}
+            placeholder="Search wine, vintage, varietal, region, notes, or tags..."
+          />
+        </div>
+        <div className="photo-filter-grid">
+          <label>Type<select value={photoFilters.category} onChange={(event) => setPhotoFilter("category", event.target.value)}>{categories.map((item) => <option key={item}>{item}</option>)}</select></label>
+          <label>Country<select value={photoFilters.country} onChange={(event) => setPhotoFilter("country", event.target.value)}>{countries.map((item) => <option key={item}>{item}</option>)}</select></label>
+          <label>Region<select value={photoFilters.region} onChange={(event) => setPhotoFilter("region", event.target.value)}>{regions.map((item) => <option key={item}>{item}</option>)}</select></label>
+          <label>Producer<select value={photoFilters.producer} onChange={(event) => setPhotoFilter("producer", event.target.value)}>{producers.map((item) => <option key={item}>{item}</option>)}</select></label>
+          <label>Photo<select value={photoFilters.view} onChange={(event) => setPhotoFilter("view", event.target.value)}><option>All</option><option>Front</option><option>Back</option></select></label>
+          <label>Sort<select value={photoFilters.sort} onChange={(event) => setPhotoFilter("sort", event.target.value)}><option value="location">Cellar location</option><option value="name">Wine name</option><option value="vintage">Newest vintage</option><option value="region">Region</option></select></label>
+          <button className="ghost-button" type="button" onClick={resetPhotoFilters}>Reset filters</button>
+        </div>
+      </section>
+
+      <div className="photo-browser-heading">
+        <div>
+          <p className="eyebrow">Filtered gallery</p>
+          <h2>{visiblePhotoCount} photo{visiblePhotoCount === 1 ? "" : "s"}</h2>
+        </div>
+        <span>{filtered.length} wine record{filtered.length === 1 ? "" : "s"}</span>
+      </div>
+
+      {filtered.length ? (
+        <div className="photo-browser-grid">
+          {filtered.map((wine) => {
+            const photos = [
+              photoFilters.view !== "Back" && wine.frontPhoto ? { label: "Front", photo: wine.frontPhoto } : null,
+              photoFilters.view !== "Front" && wine.backPhoto ? { label: "Back", photo: wine.backPhoto } : null,
+            ].filter(Boolean);
+            return (
+              <article className="photo-wine-card" key={wine.id}>
+                <button className={`photo-wine-images ${photos.length === 1 ? "single" : ""}`} type="button" onClick={() => openWine(wine.id)} aria-label={`Open ${wineTitle(wine)}`}>
+                  {photos.map(({ label, photo }) => (
+                    <span className="photo-wine-image" key={`${wine.id}-${label}`}>
+                      <img src={photoUrl(photo)} alt={`${wineTitle(wine)} ${label.toLowerCase()} bottle`} loading="lazy" />
+                      <small>{label}</small>
+                    </span>
+                  ))}
+                </button>
+                <button className="photo-wine-copy" type="button" onClick={() => openWine(wine.id)}>
+                  <span>{[wine.category, wine.country].filter(Boolean).join(" · ")}</span>
+                  <strong>{wineTitle(wine)}</strong>
+                  <small>{wine.region || "Region pending"} · {wine.variety || "Blend"}</small>
+                  <small>Qty {wine.quantity} · {wine.cellar === 1 ? "Left" : "Right"} cellar · {getSlotMeta(wine.zone, wine.slot).slotLabel}</small>
+                </button>
+              </article>
+            );
+          })}
+        </div>
+      ) : (
+        <EmptyState title="No bottle photos match" body="Reset a filter or try a broader search." />
       )}
     </div>
   );
