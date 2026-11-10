@@ -524,6 +524,33 @@ p {
   line-height: 1.25;
 }
 
+.photo-wine-copy .photo-wine-price {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 5px 0 3px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.photo-wine-copy .photo-wine-price small {
+  color: var(--muted);
+  font-size: 0.73rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.photo-wine-copy .photo-wine-price strong {
+  color: var(--gold);
+  font-size: 1.25rem;
+}
+
 .photo-wine-copy small {
   color: var(--muted);
   line-height: 1.35;
