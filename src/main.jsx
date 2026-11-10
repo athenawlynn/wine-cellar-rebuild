@@ -2533,6 +2533,7 @@ function PhotoBrowser({ wines, openWine }) {
     .sort((a, b) => {
       if (photoFilters.sort === "name") return wineTitle(a).localeCompare(wineTitle(b));
       if (photoFilters.sort === "vintage") return Number(b.vintage || 0) - Number(a.vintage || 0);
+      if (photoFilters.sort === "price") return averagePrice(b) - averagePrice(a) || wineTitle(a).localeCompare(wineTitle(b));
       if (photoFilters.sort === "region") return String(a.region || "").localeCompare(String(b.region || "")) || wineTitle(a).localeCompare(wineTitle(b));
       return Number(a.cellar || 0) - Number(b.cellar || 0) || String(a.zone || "").localeCompare(String(b.zone || "")) || Number(a.slot || 0) - Number(b.slot || 0);
     }), [photoWines, photoFilters]);
@@ -2581,7 +2582,7 @@ function PhotoBrowser({ wines, openWine }) {
           <label>Region<select value={photoFilters.region} onChange={(event) => setPhotoFilter("region", event.target.value)}>{regions.map((item) => <option key={item}>{item}</option>)}</select></label>
           <label>Producer<select value={photoFilters.producer} onChange={(event) => setPhotoFilter("producer", event.target.value)}>{producers.map((item) => <option key={item}>{item}</option>)}</select></label>
           <label>Photo<select value={photoFilters.view} onChange={(event) => setPhotoFilter("view", event.target.value)}><option>All</option><option>Front</option><option>Back</option></select></label>
-          <label>Sort<select value={photoFilters.sort} onChange={(event) => setPhotoFilter("sort", event.target.value)}><option value="location">Cellar location</option><option value="name">Wine name</option><option value="vintage">Newest vintage</option><option value="region">Region</option></select></label>
+          <label>Sort<select value={photoFilters.sort} onChange={(event) => setPhotoFilter("sort", event.target.value)}><option value="location">Cellar location</option><option value="name">Wine name</option><option value="vintage">Newest vintage</option><option value="price">Highest estimated price</option><option value="region">Region</option></select></label>
           <button className="ghost-button" type="button" onClick={resetPhotoFilters}>Reset filters</button>
         </div>
       </section>
@@ -2614,6 +2615,7 @@ function PhotoBrowser({ wines, openWine }) {
                 <button className="photo-wine-copy" type="button" onClick={() => openWine(wine.id)}>
                   <span>{[wine.category, wine.country].filter(Boolean).join(" · ")}</span>
                   <strong>{wineTitle(wine)}</strong>
+                  <span className="photo-wine-price"><small>Estimated price</small><strong>{money(Number(wine.estimatedPrice) || averagePrice(wine))}</strong></span>
                   <small>{wine.region || "Region pending"} · {wine.variety || "Blend"}</small>
                   <small>Qty {wine.quantity} · {wine.cellar === 1 ? "Left" : "Right"} cellar · {getSlotMeta(wine.zone, wine.slot).slotLabel}</small>
                 </button>
@@ -2693,7 +2695,7 @@ function WineDetail({ wine, back, onDrink, onUpdate, onNavigate, sequence = [] }
 
       <div className="detail-grid">
         <DetailCard title="Bottle Info">
-          <Spec label="Average price" value={money(averagePrice(wine))} />
+          <Spec label="Estimated price" value={money(Number(wine.estimatedPrice) || averagePrice(wine))} />
           {wine.priceEstimate && <Spec label="Workbook estimate" value={wine.priceEstimate} />}
           <Spec label="Quantity" value={wine.quantity} />
           <Spec label="Location" value={`${wine.cellar === 1 ? "Left Cellar" : "Right Cellar"}, ${getSlotMeta(wine.zone, wine.slot).slotLabel}`} />
@@ -2921,7 +2923,7 @@ function WineForm({ draft, setDraft, includeNotes = false }) {
             <option value="">Country pending</option>
             {Array.from(new Set(regionPresets.map((item) => item.country))).sort().map((country) => <option key={country}>{country}</option>)}
           </select></label>
-          <label>Average Price<input inputMode="decimal" value={draft.estimatedPrice} onChange={(event) => setField("estimatedPrice", event.target.value)} /></label>
+          <label>Estimated Price<input inputMode="decimal" value={draft.estimatedPrice} onChange={(event) => setField("estimatedPrice", event.target.value)} /></label>
           <label>Price Range / Estimate<input value={draft.priceEstimate} onChange={(event) => setField("priceEstimate", event.target.value)} placeholder="$20-35" /></label>
           <label>Quantity<input inputMode="numeric" value={draft.quantity} onChange={(event) => setField("quantity", event.target.value)} /></label>
           <label>Status<select value={draft.status} onChange={(event) => setField("status", event.target.value)}>
